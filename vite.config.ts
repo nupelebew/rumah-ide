@@ -6,8 +6,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'node:fs'
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+// Di GitHub Pages aplikasi tinggal di subfolder (/rumah-ide/); lokal tetap di root.
+const base = process.env.BASE_PATH ?? '/'
 
 export default defineConfig({
+  base,
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     react(),
@@ -20,8 +23,8 @@ export default defineConfig({
         short_name: 'Rumah Ide',
         description: 'Tempat menata ide, membedah referensi, dan merencanakan syuting.',
         lang: 'id',
-        start_url: '/',
-        scope: '/',
+        start_url: './',
+        scope: './',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#f3eee4',
@@ -32,14 +35,14 @@ export default defineConfig({
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
         share_target: {
-          action: '/',
+          action: './',
           method: 'GET',
           params: { title: 'title', text: 'text', url: 'url' },
         },
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        navigateFallback: '/index.html',
+        navigateFallback: `${base}index.html`,
       },
     }),
   ],
