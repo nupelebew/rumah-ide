@@ -1,15 +1,14 @@
+import type { Table } from 'dexie'
 import { db } from './db'
 import { now, uid } from '../lib/id'
 import type { EntityType, ID, Link, Media } from './types'
 import { toDateKey } from '../lib/dates'
 
 /** Perbarui sebagian field + updatedAt pada tabel apa pun yang punya kolom id. */
-export async function patch<T extends { id: ID; updatedAt?: number }>(
-  table: { update: (id: ID, changes: Partial<T>) => Promise<number> },
-  id: ID,
-  changes: Partial<T>,
-) {
-  await table.update(id, { ...changes, updatedAt: now() } as Partial<T>)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function patch<T extends { updatedAt?: number }>(table: Table<T, ID, any>, id: ID, changes: Partial<T>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await table.update(id, { ...changes, updatedAt: now() } as any)
 }
 
 /* ---------- Tag ---------- */

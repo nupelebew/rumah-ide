@@ -58,6 +58,10 @@ function Screen({ route }: { route: string[] }) {
   }
 }
 
+// Dijalankan sekali saja walau efek React terpanggil dua kali (StrictMode).
+let booting: Promise<void> | null = null
+const boot = () => (booting ??= ensureDefaults().then(seedSamples))
+
 /** Teks yang dibagikan dari aplikasi lain (Web Share Target) masuk lewat ?text=&url= */
 function readShared(): string {
   const p = new URLSearchParams(window.location.search)
@@ -74,9 +78,7 @@ export default function App() {
 
   useEffect(() => {
     applyThemeSetting()
-    ensureDefaults()
-      .then(seedSamples)
-      .finally(() => setReady(true))
+    boot().finally(() => setReady(true))
   }, [])
 
   return (
