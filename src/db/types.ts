@@ -93,6 +93,8 @@ export interface Reference extends Base {
   videoId?: ID
   durationSec?: number
   thumbId?: ID
+  /** Frame penting yang diambil dari video (untuk dikirim ke Claude / moodboard) */
+  frameIds?: ID[]
 }
 
 export interface Pattern extends Base {
