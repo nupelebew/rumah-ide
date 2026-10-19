@@ -114,7 +114,7 @@ export default function ShootList() {
         <p className="mb-2 text-sm text-ink-2">Jadwal yang namanya diawali “take / syuting / shoot” sudah dicentang. Sesuaikan sendiri.</p>
         <div className="divide-y-[1.5px] divide-line">
           {events?.map((e) => (
-            <CheckRow key={e.uid} checked={picked.includes(e.uid)} onToggle={() => setPicked((p) => (p.includes(e.uid) ? p.filter((x) => x !== e.uid) : [...p, e.uid]))} sub={`${relativeDay(e.date)} · ${e.start}–${e.end ?? ''}${e.categories ? ` · ${e.categories}` : ''}`}>
+            <CheckRow strike={false} key={e.uid} checked={picked.includes(e.uid)} onToggle={() => setPicked((p) => (p.includes(e.uid) ? p.filter((x) => x !== e.uid) : [...p, e.uid]))} sub={`${relativeDay(e.date)} · ${e.start}–${e.end ?? ''}${e.categories ? ` · ${e.categories}` : ''}`}>
               {e.summary}
             </CheckRow>
           ))}

@@ -319,6 +319,7 @@ export function CheckRow({
   sub,
   right,
   big,
+  strike = true,
 }: {
   checked: boolean
   onToggle: () => void
@@ -326,6 +327,8 @@ export function CheckRow({
   sub?: ReactNode
   right?: ReactNode
   big?: boolean
+  /** false untuk daftar pilihan (centang = dipilih, bukan selesai) */
+  strike?: boolean
 }) {
   return (
     <div className={cx('flex items-center gap-3', big ? 'min-h-16' : 'min-h-12')}>
@@ -337,13 +340,13 @@ export function CheckRow({
         className={cx(
           'flex shrink-0 items-center justify-center rounded-lg border-2 transition',
           big ? 'size-11' : 'size-8',
-          checked ? 'border-ok bg-ok text-paper anim-pop' : 'border-ink-3 bg-card',
+          checked ? (strike ? 'border-ok bg-ok text-paper anim-pop' : 'border-ink bg-ink text-paper') : 'border-ink-3 bg-card',
         )}
       >
         {checked && <Check size={big ? 26 : 18} strokeWidth={3} />}
       </button>
       <button type="button" onClick={onToggle} className="min-w-0 flex-1 py-1.5 text-left">
-        <div className={cx('break-words', checked && 'text-ink-3 line-through decoration-2', big && 'text-lg font-semibold')}>{children}</div>
+        <div className={cx('break-words', checked && strike && 'text-ink-3 line-through decoration-2', big && 'text-lg font-semibold')}>{children}</div>
         {sub && <div className="text-xs text-ink-3">{sub}</div>}
       </button>
       {right}

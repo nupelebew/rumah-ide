@@ -11,6 +11,7 @@ import { discard, park, toContent, toDaily } from '../features/capture/triage'
 import { navigate } from '../lib/router'
 import { toast } from './Toast'
 import { convertIdea } from '../features/daily/convert'
+import { BridgeButton } from '../features/bridge/BridgeButton'
 
 const KIND_LABEL: Record<Idea['kind'], string> = {
   raw: 'Mentah',
@@ -89,6 +90,8 @@ export function IdeaSheet({ id, onClose }: { id: ID | null; onClose: () => void 
           </div>
 
           {idea.kind === 'daily' && <ConvertDaily idea={idea} onDone={onClose} />}
+
+          <BridgeButton input={{ task: idea.kind === 'daily' ? 'breakdown' : 'free', ideaIds: [idea.id] }} label="Kirim ide ini ke Claude" block />
 
           <LinkPanel type="idea" id={idea.id} />
 

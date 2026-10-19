@@ -10,6 +10,9 @@ import { newIdea, newReference } from '../../db/factories'
 import { navigate } from '../../lib/router'
 import { uid, now } from '../../lib/id'
 import { toDateKey } from '../../lib/dates'
+import { looksLikeBridgeResponse } from '../../ai/actions'
+import { BridgeSheet } from '../bridge/BridgeSheet'
+import { Sparkles } from 'lucide-react'
 
 /** Tambah cepat dari mana saja: teks → ide mentah, link → referensi, atau tugas hari ini. */
 export function QuickAdd({ open, onClose, initial = '' }: { open: boolean; onClose: () => void; initial?: string }) {
@@ -22,6 +25,8 @@ export function QuickAdd({ open, onClose, initial = '' }: { open: boolean; onClo
     }
   }, [open, initial])
 
+  const [bridgeText, setBridgeText] = useState<string>()
+  const isBridge = useMemo(() => looksLikeBridgeResponse(text), [text])
   const url = useMemo(() => extractUrl(text), [text])
   const ideas = useMemo(() => splitBrainDump(text), [text])
   const onlyUrl = !!url && text.trim().replace(url, '').trim().length < 60
@@ -62,18 +67,33 @@ export function QuickAdd({ open, onClose, initial = '' }: { open: boolean; onClo
         {url ? `Link ${PLATFORM_LABEL[detectPlatform(url)]} terdeteksi` : ideas.length > 1 ? `${ideas.length} ide terpisah` : ' '}
       </div>
       <div className="space-y-2">
-        {url && (
+        {isBridge && (
+          <Button variant="primary" size="lg" block icon={<Sparkles size={20} />} onClick={() => setBridgeText(text)}>
+            Terapkan jawaban Claude
+          </Button>
+        )}
+        {url && !isBridge && (
           <Button variant={onlyUrl ? 'primary' : 'soft'} size="lg" block icon={<Link2 size={20} />} onClick={saveRef}>
             Simpan sebagai Referensi
           </Button>
         )}
-        <Button variant={url && onlyUrl ? 'soft' : 'primary'} size="lg" block icon={<ListPlus size={20} />} disabled={!ideas.length} onClick={saveIdeas}>
+        <Button variant={(url && onlyUrl) || isBridge ? 'soft' : 'primary'} size="lg" block icon={<ListPlus size={20} />} disabled={!ideas.length} onClick={saveIdeas}>
           {ideas.length > 1 ? `Simpan ${ideas.length} ide ke Inbox` : 'Simpan ke Inbox'}
         </Button>
         <Button variant="ghost" block icon={<CheckSquare size={19} />} disabled={!text.trim()} onClick={saveTask}>
           Jadikan tugas hari ini
         </Button>
       </div>
+      {bridgeText && (
+        <BridgeSheet
+          input={null}
+          initialResponse={bridgeText}
+          onClose={() => {
+            setBridgeText(undefined)
+            onClose()
+          }}
+        />
+      )}
     </Sheet>
   )
 }

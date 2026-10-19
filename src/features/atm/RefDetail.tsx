@@ -270,7 +270,7 @@ function TiruTab({ r, onGoAmati }: { r: Reference; onGoAmati: () => void }) {
       <p className="mb-2 text-sm text-ink-2">Centang yang akan ditiru persis. Sisanya bebas kamu modifikasi.</p>
       <div className="divide-y-[1.5px] divide-line">
         {filled.map((f) => (
-          <CheckRow key={f.key} checked={r.atm.tiru.includes(f.key)} onToggle={() => toggle(f.key)} sub={r.atm.amati[f.key]}>
+          <CheckRow strike={false} key={f.key} checked={r.atm.tiru.includes(f.key)} onToggle={() => toggle(f.key)} sub={r.atm.amati[f.key]}>
             {f.label}
           </CheckRow>
         ))}
