@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
+// Snapshot = hash lengkap (termasuk ?query) supaya perubahan query juga memicu render ulang
 function read(): string {
-  const h = window.location.hash.replace(/^#\/?/, '')
-  return h.split('?')[0] || 'hari-ini'
+  return window.location.hash
 }
 
 function subscribe(cb: () => void) {
@@ -12,7 +12,8 @@ function subscribe(cb: () => void) {
 
 /** Router hash sederhana: "#/konten/abc" → ["konten", "abc"]. */
 export function useRoute(): string[] {
-  const path = useSyncExternalStore(subscribe, read, () => 'hari-ini')
+  const hash = useSyncExternalStore(subscribe, read, () => '')
+  const path = hash.replace(/^#\/?/, '').split('?')[0] || 'hari-ini'
   return path.split('/').filter(Boolean)
 }
 

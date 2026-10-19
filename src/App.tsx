@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useRoute } from './lib/router'
+import { queryParam, useRoute } from './lib/router'
 import { BottomNav, TopBar } from './components/Layout'
 import { Toaster } from './components/Toast'
 import { QuickAdd } from './features/capture/QuickAdd'
@@ -44,7 +44,7 @@ function Screen({ route }: { route: string[] }) {
     case 'syuting':
       return b ? <ShootScreen id={b} key={b} /> : <ShootList />
     case 'harian':
-      return <DailyScreen />
+      return <DailyScreen key={queryParam('tab') ?? ''} />
     case 'keputusan':
       return <DecisionScreen id={b} key={b} />
     case 'review':
