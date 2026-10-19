@@ -4,6 +4,8 @@ Tempat menata ide, membedah video referensi pakai metode **ATM (Amati, Tiru, Mod
 
 Semua data tersimpan **di perangkat** (IndexedDB). Tidak ada server, tetap jalan offline.
 
+**Versi live:** https://nupelebew.github.io/rumah-ide/ (ter-deploy otomatis lewat GitHub Actions setiap push ke `main`).
+
 ## Menjalankan di komputer
 
 Butuh Node.js 20 atau lebih baru.
