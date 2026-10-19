@@ -86,3 +86,23 @@ export function slug(s: string): string {
       .slice(0, 40) || 'tanpa-judul'
   )
 }
+
+/** Tempel label teks di pojok frame (mis. "S01 · Hook · R1 00:01–00:03") supaya Claude tahu gambar mana yang mana. */
+export async function labelFrame(blob: Blob, label: string): Promise<Blob> {
+  const img = await createImageBitmap(blob)
+  const c = document.createElement('canvas')
+  c.width = img.width
+  c.height = img.height
+  const x = c.getContext('2d')!
+  x.drawImage(img, 0, 0)
+  const size = Math.max(14, Math.round(img.width / 22))
+  x.font = `700 ${size}px ui-monospace, monospace`
+  const pad = Math.round(size * 0.45)
+  const w = x.measureText(label).width + pad * 2
+  x.fillStyle = 'rgba(0,0,0,0.72)'
+  x.fillRect(0, 0, Math.min(w, c.width), size + pad * 2)
+  x.fillStyle = '#fff'
+  x.textBaseline = 'top'
+  x.fillText(label, pad, pad, c.width - pad * 2)
+  return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('Gagal'))), 'image/jpeg', 0.85))
+}

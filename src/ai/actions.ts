@@ -19,6 +19,9 @@ export interface SegmentIn {
   duration: number
   description: string
   refNo?: string
+  /** Detik di video sumber (bila Claude tahu) */
+  sourceIn?: number
+  sourceOut?: number
   shotType: string
   angle: string
   lens: string
@@ -51,7 +54,7 @@ export type Action =
   | { type: 'atm_fill'; refId: string; amati: Record<string, string> }
   | { type: 'storyboard'; ideaId: string; scenes: SceneIn[] }
   | { type: 'master'; masterId?: string; mixId?: string; title?: string; summary?: string; segments: SegmentIn[] }
-  | { type: 'shoot_checklist'; shootId?: string; masterId?: string; title?: string; shots: ShotIn[]; prep: string[] }
+  | { type: 'shoot_checklist'; shootId?: string; masterId?: string; title?: string; date?: string; start?: string; end?: string; location?: string; shots: ShotIn[]; prep: string[] }
   | { type: 'edit_recipe'; masterId: string; steps: { segment: string; steps: string[] }[] }
   | { type: 'review_summary'; week: string; text: string }
   | { type: 'note'; text: string }
@@ -78,6 +81,11 @@ const num = (v: unknown, def: number, min = 0.2, max = 600): number => {
   return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : def
 }
 const optStr = (v: unknown) => str(v) || undefined
+const clock = (v: unknown) => (typeof v === 'string' && /^\d{1,2}[:.]\d{2}$/.test(v.trim()) ? v.trim().replace('.', ':').padStart(5, '0') : undefined)
+const optNum = (v: unknown): number | undefined => {
+  const n = typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(',', '.'))
+  return Number.isFinite(n) && n >= 0 ? +n.toFixed(2) : undefined
+}
 const date = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v.trim()) ? v.trim() : undefined)
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {})
 
@@ -94,6 +102,8 @@ function segment(v: unknown): SegmentIn {
     duration: num(o.duration ?? o.durationSec, 2),
     description: str(o.description),
     refNo: optStr(o.refNo ?? o.ref),
+    sourceIn: optNum(o.sourceIn),
+    sourceOut: optNum(o.sourceOut),
     shotType: str(o.shotType, 120),
     angle: str(o.angle, 120),
     lens: str(o.lens, 60),
@@ -194,7 +204,18 @@ export function normalizeAction(raw: unknown): Action | string {
     case 'shoot_checklist': {
       const shots = Array.isArray(o.shots) ? o.shots.slice(0, 60).map(shot) : []
       if (!shots.length) return 'shoot_checklist tanpa shots'
-      return { type, shootId: optStr(o.shootId), masterId: optStr(o.masterId), title: optStr(o.title), shots, prep: strArr(o.prep, 40) }
+      return {
+        type,
+        shootId: optStr(o.shootId),
+        masterId: optStr(o.masterId),
+        title: optStr(o.title),
+        date: date(o.date),
+        start: clock(o.start),
+        end: clock(o.end),
+        location: optStr(o.location),
+        shots,
+        prep: strArr(o.prep, 40),
+      }
     }
     case 'edit_recipe': {
       const masterId = str(o.masterId)

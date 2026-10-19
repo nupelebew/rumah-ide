@@ -13,7 +13,8 @@ import type { Mix, MixItem, Reference } from '../../db/types'
 import { uid } from '../../lib/id'
 import { navigate } from '../../lib/router'
 import { formatTimecode } from '../../lib/dates'
-import { frameFromElement } from '../../lib/video'
+import { frameFromElement, grabFrame } from '../../lib/video'
+import { parseRange } from '../../lib/timerange'
 import { TAKE_LABEL, TAKE_OPTIONS, dealToMaster, refNo } from './mixOps'
 import { BridgeButton } from '../bridge/BridgeButton'
 
@@ -289,6 +290,29 @@ function ItemSheet({ mix, itemId, refById, onClose }: { mix: Mix; itemId: string
           </div>
         )}
 
+        <RangeInput
+          key={`${item.inSec}-${item.outSec}`}
+          initial={item.inSec !== undefined && item.outSec !== undefined ? `${item.inSec}-${item.outSec}` : ''}
+          onApply={async (r) => {
+            let frameId = item.frameId
+            if (ref?.videoId) {
+              const m = await db.media.get(ref.videoId)
+              if (m) {
+                try {
+                  const blob = await grabFrame(m.blob, r.inSec)
+                  await deleteMedia(item.frameId)
+                  frameId = await saveMedia('frame', blob, `racik-${refNo(mix, item.refId)}-${formatTimecode(r.inSec)}.jpg`)
+                } catch {
+                  /* frame gagal diambil: detik tetap disimpan */
+                }
+              }
+            }
+            await update({ ...r, frameId })
+            if (video.current) video.current.currentTime = r.inSec
+            toast(`${refNo(mix, item.refId)} ${formatTimecode(r.inSec)} → ${formatTimecode(r.outSec)}`)
+          }}
+        />
+
         <div>
           <Label hint="Pilih semua yang berlaku">Yang diambil dari referensi ini</Label>
           <MultiChoice options={TAKE_OPTIONS} value={item.takes} onChange={(takes) => update({ takes })} />
@@ -374,5 +398,23 @@ function SlotSheet({ mix, slotId, onClose }: { mix: Mix; slotId: string | null; 
         </Button>
       </div>
     </Sheet>
+  )
+}
+
+/** Ketik rentang detik langsung, mis. "1-3" atau "0:01–0:03". */
+function RangeInput({ initial, onApply }: { initial: string; onApply: (r: { inSec: number; outSec: number }) => void }) {
+  const [v, setV] = useState(initial)
+  const parsed = parseRange(v)
+  return (
+    <div>
+      <Label hint="Tanpa memutar video. Contoh: 1-3 · 1.5-3.2 · 0:01-0:03">Ketik detik potongan</Label>
+      <div className="flex gap-2">
+        <input value={v} onChange={(e) => setV(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && parsed && onApply(parsed)} inputMode="decimal" placeholder="1-3" className="field min-w-0 flex-1 font-mono" />
+        <Button variant="ink" disabled={!parsed} onClick={() => parsed && onApply(parsed)}>
+          Pakai
+        </Button>
+      </div>
+      {v && !parsed && <p className="mt-1 text-xs text-accent">Format belum benar. Tulis mulai-selesai, mis. 1-3</p>}
+    </div>
   )
 }

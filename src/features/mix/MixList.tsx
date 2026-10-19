@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Clapperboard } from 'lucide-react'
+import { Plus, Clapperboard, Sparkles } from 'lucide-react'
 import { Page } from '../../components/Layout'
 import { Button, Chip, Empty, PageHeader, SampleBadge, Section } from '../../components/ui'
 import { Sheet } from '../../components/Sheet'
@@ -8,12 +8,14 @@ import { db } from '../../db/db'
 import { newMaster, newMix } from '../../db/factories'
 import { navigate } from '../../lib/router'
 import { RefTabs } from '../atm/RefLibrary'
+import { MergeStartSheet } from './ClaudeFlow'
 
 export default function MixList() {
   const mixes = useLiveQuery(() => db.mixes.orderBy('createdAt').reverse().toArray(), [])
   const masters = useLiveQuery(() => db.masters.orderBy('createdAt').reverse().toArray(), [])
   const [naming, setNaming] = useState<'mix' | 'master' | null>(null)
   const [title, setTitle] = useState('')
+  const [merging, setMerging] = useState(false)
 
   const create = async () => {
     const t = title.trim() || 'Racikan baru'
@@ -36,19 +38,17 @@ export default function MixList() {
         <RefTabs value="racik" />
       </PageHeader>
 
-      <div className="px-4">
-        <div className="sketch flex gap-3 bg-paper-2 p-4">
-          <ol className="flex-1 space-y-1 text-sm text-ink-2">
-            <li>
-              <b className="text-ink">1. Racik</b> — kumpulkan beberapa referensi, tentukan mana untuk Hook, Isi, Penutup.
-            </li>
-            <li>
-              <b className="text-ink">2. Deal</b> — jadi satu <i>Referensi Utama</i>. Bisa dirakit jadi video lewat Claude Code + Remotion.
-            </li>
-            <li>
-              <b className="text-ink">3. Jalankan</b> — turunkan jadi Checklist Shoot & Resep Edit CapCut.
-            </li>
-          </ol>
+      <div className="space-y-2 px-4">
+        <button type="button" onClick={() => setMerging(true)} className="sketch block w-full border-accent p-4 text-left active:translate-y-px">
+          <div className="flex items-center gap-2">
+            <Sparkles size={20} className="text-accent" />
+            <span className="font-display text-lg font-bold">Cara cepat: gabungkan di Claude</span>
+          </div>
+          <p className="mt-1 text-sm text-ink-2">Kirim semua video referensi ke Claude → dapat 1 video contoh + sound → tempel balik jadi daftar shot, checklist, & resep edit.</p>
+          <span className="mt-2 inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-ink">Disarankan</span>
+        </button>
+        <div className="rounded-[14px] border-[1.5px] border-dashed border-line p-3 text-sm text-ink-2">
+          <b className="text-ink">Cara manual: Papan Racik</b> — susun sendiri referensi ke slot Hook/Isi/Penutup, tandai detiknya, lalu Deal. Cocok kalau mau kontrol penuh atau tanpa internet.
         </div>
       </div>
 
@@ -116,6 +116,7 @@ export default function MixList() {
         )}
       </Section>
 
+      <MergeStartSheet open={merging} onClose={() => setMerging(false)} />
       <Sheet open={!!naming} onClose={() => setNaming(null)} title={naming === 'mix' ? 'Papan racik baru' : 'Referensi Utama kosong'}>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} placeholder="Judul (mis. “Reel tenis klien”)" className="field mb-3" />
         <Button variant="primary" size="lg" block onClick={create}>

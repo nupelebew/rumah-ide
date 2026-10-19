@@ -21,6 +21,7 @@ import DecisionScreen from './features/daily/DecisionScreen'
 import ReviewScreen from './features/review/ReviewScreen'
 import SearchScreen from './features/search/SearchScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
+import GuideScreen from './features/guide/GuideScreen'
 import { ensureDefaults, seedSamples } from './db/seed'
 import { applyThemeSetting } from './features/settings/theme'
 
@@ -53,6 +54,8 @@ function Screen({ route }: { route: string[] }) {
       return <SearchScreen />
     case 'atur':
       return <SettingsScreen />
+    case 'panduan':
+      return <GuideScreen />
     default:
       return <TodayScreen />
   }

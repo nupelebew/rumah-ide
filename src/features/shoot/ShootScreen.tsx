@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CalendarPlus, Minus, Pencil, Plus, Star, Sun, SunDim, Trash2, Clapperboard, Save, PartyPopper } from 'lucide-react'
+import { CalendarPlus, Check, Minus, Pencil, Play, Plus, Star, Sun, SunDim, Trash2, Clapperboard, Save, PartyPopper } from 'lucide-react'
 import { Page } from '../../components/Layout'
 import { AutoField, Button, CheckRow, IconButton, Label, PageHeader, SampleBadge, Section, Segmented, cx } from '../../components/ui'
-import { Thumb } from '../../components/Media'
+import { Thumb, VideoPlayer } from '../../components/Media'
 import { Confirm, Sheet } from '../../components/Sheet'
 import { toast } from '../../components/Toast'
 import { db } from '../../db/db'
@@ -47,6 +47,11 @@ function useWakeLock(on: boolean) {
 
 export default function ShootScreen({ id }: { id: string }) {
   const s = useLiveQuery(() => db.shoots.get(id), [id])
+  const master = useLiveQuery(async () => {
+    const sh = await db.shoots.get(id)
+    return sh?.masterId ? await db.masters.get(sh.masterId) : undefined
+  }, [id])
+  const [example, setExample] = useState<{ from: number; to?: number } | null>(null)
   const [tab, setTab] = useState<Tab>('shot')
   const [field, setField] = useState(false)
   const [editShot, setEditShot] = useState<string | null>(null)
@@ -66,6 +71,19 @@ export default function ShootScreen({ id }: { id: string }) {
   const doneShots = s.shots.filter((x) => x.done).length
   const donePrep = s.prep.filter((x) => x.done).length
   const allDone = s.shots.length > 0 && doneShots === s.shots.length
+
+  /** Posisi segmen di video contoh = jumlah durasi segmen sebelumnya. */
+  const exampleRange = (segmentId?: string) => {
+    if (!master?.videoId || !segmentId) return null
+    let t = 0
+    for (const seg of master.segments) {
+      if (seg.id === segmentId) return { from: t, to: t + seg.durationSec }
+      t += seg.durationSec
+    }
+    return null
+  }
+  const next = s.shots.find((x) => !x.done)
+  const nextIdx = next ? s.shots.indexOf(next) : -1
 
   const finish = async () => {
     if (s.ideaId) await patch(db.ideas, s.ideaId, { stage: 'edit' })
@@ -114,6 +132,11 @@ export default function ShootScreen({ id }: { id: string }) {
           <Button variant={field ? 'ink' : 'soft'} block size="lg" className="mt-2" icon={field ? <SunDim size={20} /> : <Sun size={20} />} onClick={() => setField((f) => !f)}>
             {field ? 'Keluar Mode Lapangan' : 'Mode Lapangan (kontras tinggi, layar tetap nyala)'}
           </Button>
+          {master?.videoId && (
+            <Button block className="mt-2" icon={<Play size={18} />} onClick={() => setExample({ from: 0 })}>
+              Tonton video contoh
+            </Button>
+          )}
         </div>
 
         <div className="px-4 pt-4">
@@ -129,9 +152,37 @@ export default function ShootScreen({ id }: { id: string }) {
 
         {tab === 'shot' ? (
           <Section>
+            {field && next && (
+              <div className="sticky top-[calc(56px+env(safe-area-inset-top))] z-20 -mx-4 mb-3 border-b-2 border-ink bg-paper px-4 py-3">
+                <div className="kicker">Berikutnya · {nextIdx + 1}/{s.shots.length}</div>
+                <div className="font-display text-2xl leading-tight font-bold">{next.label}</div>
+                <div className="mt-1 text-base">{[next.shotType, next.angle, next.lens, next.fps && `${next.fps} fps`, next.movement].filter(Boolean).join(' · ')}</div>
+                <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-2">
+                  <Button variant="ink" size="lg" icon={<Check size={22} />} onClick={() => setShot(next.id, { done: true, goodTake: true })}>
+                    Dapat!
+                  </Button>
+                  <Button size="lg" onClick={() => setShot(next.id, { takes: next.takes + 1 })} aria-label="Tambah take">
+                    +Take <span className="font-mono">{next.takes}</span>
+                  </Button>
+                  {exampleRange(next.segmentId) && (
+                    <Button size="lg" onClick={() => setExample(exampleRange(next.segmentId))} aria-label="Lihat contoh" className="w-14 px-0">
+                      <Play size={22} />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
             <ol className="space-y-2">
               {s.shots.map((sh, i) => (
-                <ShotCard key={sh.id} shot={sh} n={i + 1} field={field} onChange={(c) => setShot(sh.id, c)} onEdit={() => setEditShot(sh.id)} />
+                <ShotCard
+                  key={sh.id}
+                  shot={sh}
+                  n={i + 1}
+                  field={field}
+                  onChange={(c) => setShot(sh.id, c)}
+                  onEdit={() => setEditShot(sh.id)}
+                  onExample={exampleRange(sh.segmentId) ? () => setExample(exampleRange(sh.segmentId)) : undefined}
+                />
               ))}
             </ol>
             {!s.shots.length && <p className="py-4 text-sm text-ink-3">Belum ada shot. Tambah manual atau buat dari Referensi Utama.</p>}
@@ -190,6 +241,7 @@ export default function ShootScreen({ id }: { id: string }) {
         )}
       </Page>
 
+      {example && master?.videoId && <ExampleSheet videoId={master.videoId} range={example} onClose={() => setExample(null)} />}
       <ShotSheet s={s} shotId={editShot} onClose={() => setEditShot(null)} />
       <InfoSheet s={s} open={editInfo} onClose={() => setEditInfo(false)} />
       <Confirm
@@ -224,7 +276,21 @@ function Progress({ label, done, total }: { label: string; done: number; total: 
   )
 }
 
-function ShotCard({ shot, n, field, onChange, onEdit }: { shot: ShootShot; n: number; field: boolean; onChange: (c: Partial<ShootShot>) => void; onEdit: () => void }) {
+function ShotCard({
+  shot,
+  n,
+  field,
+  onChange,
+  onEdit,
+  onExample,
+}: {
+  shot: ShootShot
+  n: number
+  field: boolean
+  onChange: (c: Partial<ShootShot>) => void
+  onEdit: () => void
+  onExample?: () => void
+}) {
   const [zoom, setZoom] = useState(false)
   const meta = [shot.shotType, shot.angle, shot.lens, shot.fps && `${shot.fps} fps`, shot.movement, shot.durationSec && `${shot.durationSec} dtk`].filter(Boolean)
   return (
@@ -257,6 +323,11 @@ function ShotCard({ shot, n, field, onChange, onEdit }: { shot: ShootShot; n: nu
           <Star size={20} fill={shot.goodTake ? 'currentColor' : 'none'} />
         </IconButton>
         <div className="flex-1" />
+        {onExample && (
+          <IconButton label="Lihat contoh shot ini" onClick={onExample}>
+            <Play size={19} />
+          </IconButton>
+        )}
         {!field && (
           <IconButton label="Ubah shot" onClick={onEdit}>
             <Pencil size={17} />
@@ -398,6 +469,31 @@ function InfoSheet({ s, open, onClose }: { s: ShootSession; open: boolean; onClo
           <AutoField value={s.location} onSave={(location) => set({ location })} />
         </div>
       </div>
+    </Sheet>
+  )
+}
+
+/** Putar video contoh dari detik tertentu; bila ada batas akhir, diulang di potongan itu saja. */
+function ExampleSheet({ videoId, range, onClose }: { videoId: string; range: { from: number; to?: number }; onClose: () => void }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    let started = false
+    // timer biasa (bukan requestAnimationFrame) supaya tetap jalan walau tab sedang tidak terlihat
+    const t = window.setInterval(() => {
+      const el = ref.current
+      if (!el || el.readyState < 1) return
+      if (!started) {
+        started = true
+        el.currentTime = range.from
+        el.play().catch(() => {})
+      } else if (range.to !== undefined && el.currentTime >= range.to) el.currentTime = range.from
+    }, 80)
+    return () => window.clearInterval(t)
+  }, [range])
+  return (
+    <Sheet open onClose={onClose} title={range.to !== undefined ? 'Contoh shot ini' : 'Video contoh'}>
+      <VideoPlayer id={videoId} ref={ref} />
+      {range.to !== undefined && <p className="mt-2 text-center text-xs text-ink-3">Diulang di potongan ini saja</p>}
     </Sheet>
   )
 }

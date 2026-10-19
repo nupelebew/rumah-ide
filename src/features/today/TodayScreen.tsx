@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowRight, ClipboardCheck, Flame, Inbox, Plus, X, History } from 'lucide-react'
+import { ArrowRight, ClipboardCheck, Flame, Inbox, Plus, X, History, CircleHelp } from 'lucide-react'
 import { Page } from '../../components/Layout'
-import { Button, CheckRow, PageHeader, Section, cx } from '../../components/ui'
+import { Button, CheckRow, IconButton, PageHeader, Section, cx } from '../../components/ui'
 import { Sheet } from '../../components/Sheet'
 import { db } from '../../db/db'
 import { resolveEntity, TYPE_LABEL, type EntityInfo } from '../../db/entities'
@@ -66,7 +66,16 @@ export default function TodayScreen() {
 
   return (
     <Page>
-      <PageHeader kicker={formatDate(today)} title="Hari Ini" />
+      <PageHeader
+        kicker={formatDate(today)}
+        title="Hari Ini"
+        actions={
+          <IconButton label="Panduan" onClick={() => navigate('panduan')}>
+            <CircleHelp size={22} />
+          </IconButton>
+        }
+      />
+      <GuideBanner />
       <div className="px-4">
         <p className="mb-3 text-sm text-ink-2">
           {picks?.length ? `${doneCount} dari ${picks.length} beres. Fokus ke ini dulu, sisanya bisa nanti.` : 'Pilih maksimal 3 hal terpenting hari ini. Sisanya biar menunggu.'}
@@ -250,5 +259,38 @@ function PickSheet({ open, onClose, picked }: { open: boolean; onClose: () => vo
         Selesai
       </Button>
     </Sheet>
+  )
+}
+
+const GUIDE_KEY = 'rumah-ide.guideSeen'
+
+/** Sapaan sekali untuk pengguna baru; bisa ditutup. */
+function GuideBanner() {
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(GUIDE_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  if (hidden) return null
+  const close = () => {
+    try {
+      localStorage.setItem(GUIDE_KEY, '1')
+    } catch {
+      /* abaikan */
+    }
+    setHidden(true)
+  }
+  return (
+    <div className="mx-4 mb-3 flex items-center gap-3 rounded-[14px] bg-ink p-3 text-paper">
+      <CircleHelp size={22} className="shrink-0" />
+      <button type="button" onClick={() => (close(), navigate('panduan'))} className="flex-1 text-left text-sm">
+        <b>Baru di sini?</b> Baca panduan 3 menit, termasuk alur referensi → syuting pakai Claude.
+      </button>
+      <button type="button" onClick={close} aria-label="Tutup" className="flex size-10 shrink-0 items-center justify-center rounded-lg">
+        <X size={18} />
+      </button>
+    </div>
   )
 }

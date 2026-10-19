@@ -182,14 +182,16 @@ export async function applyAction(a: Action): Promise<string | undefined> {
         // titik potong & frame dari papan racik dipertahankan bila sumbernya sama
         const keep = old && old.refId === refId ? { inSec: old.inSec, outSec: old.outSec, frameId: old.frameId } : {}
         const fromMix = !keep.frameId && mix ? mix.items.find((it) => it.refId === refId) : undefined
+        const src = s.sourceIn !== undefined && s.sourceOut !== undefined && s.sourceOut > s.sourceIn ? { inSec: s.sourceIn, outSec: s.sourceOut } : {}
         return newSegment({
           slot: s.slot,
           label: s.label || `${s.slot}${s.refNo ? ` · ${s.refNo}` : ''}`,
           durationSec: s.duration,
-          description: s.description,
+          description: [s.description, s.refNo && !refId && `Sumber: ${s.refNo}${src.inSec !== undefined ? ` ${src.inSec}–${src.outSec} dtk` : ''}`].filter(Boolean).join(' — '),
           refId,
           ...keep,
           ...(fromMix ? { inSec: fromMix.inSec, outSec: fromMix.outSec, frameId: fromMix.frameId } : {}),
+          ...(refId ? src : {}),
           shotType: s.shotType,
           angle: s.angle,
           lens: s.lens,
@@ -215,7 +217,12 @@ export async function applyAction(a: Action): Promise<string | undefined> {
     }
     case 'shoot_checklist': {
       const master = a.masterId ? await db.masters.get(a.masterId) : undefined
-      const frameFor = (label: string) => master?.segments.find((s) => s.label && label.toLowerCase().includes(s.label.toLowerCase()))?.frameId
+      // shot dari Claude dicocokkan ke segmen lewat nama, supaya frame & tombol "lihat contoh" ikut
+      const norm = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, '').trim()
+      const segFor = (label: string) => {
+        const l = norm(label)
+        return master?.segments.find((s) => s.label && (l.includes(norm(s.label)) || norm(s.label).includes(l)))
+      }
       const existing = a.shootId ? await db.shoots.get(a.shootId) : undefined
       const shots = a.shots.map((s) => {
         const old = existing?.shots.find((x) => x.label.toLowerCase() === s.label.toLowerCase())
@@ -228,7 +235,8 @@ export async function applyAction(a: Action): Promise<string | undefined> {
           fps: s.fps,
           movement: s.movement,
           durationSec: s.duration,
-          frameId: old?.frameId ?? frameFor(s.label),
+          frameId: old?.frameId ?? segFor(s.label)?.frameId,
+          segmentId: old?.segmentId ?? segFor(s.label)?.id,
           done: old?.done ?? false,
           takes: old?.takes ?? 0,
           goodTake: old?.goodTake ?? false,
@@ -237,10 +245,25 @@ export async function applyAction(a: Action): Promise<string | undefined> {
       if (existing) {
         const doneLabels = new Set(existing.prep.filter((p) => p.done).map((p) => p.label.toLowerCase()))
         const prep = a.prep.length ? a.prep.map((label) => ({ id: uid(), label, done: doneLabels.has(label.toLowerCase()) })) : existing.prep
-        await patch(db.shoots, existing.id, { shots, prep })
+        await patch(db.shoots, existing.id, {
+          shots,
+          prep,
+          ...(a.date && !existing.date ? { date: a.date } : {}),
+          ...(a.start && !existing.start ? { start: a.start, end: a.end } : {}),
+          ...(a.location && !existing.location ? { location: a.location } : {}),
+        })
         return `syuting/${existing.id}`
       }
-      const s = newShoot(a.title ?? `Syuting — ${master?.title ?? 'baru'}`, { masterId: master?.id, ideaId: master?.ideaId, shots, prep: checkItems(a.prep.length ? a.prep : DEFAULT_PREP) })
+      const s = newShoot(a.title ?? `Syuting — ${master?.title ?? 'baru'}`, {
+        masterId: master?.id,
+        ideaId: master?.ideaId,
+        date: a.date,
+        start: a.start,
+        end: a.end,
+        location: a.location ?? '',
+        shots,
+        prep: checkItems(a.prep.length ? a.prep : DEFAULT_PREP),
+      })
       await db.shoots.add(s)
       if (master) await link('shoot', s.id, 'master', master.id)
       return `syuting/${s.id}`

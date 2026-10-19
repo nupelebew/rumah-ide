@@ -73,7 +73,17 @@ Jawaban Claude juga bisa ditempel di tombol **+** (Tangkap cepat). Aplikasi meng
 
 Modul AI ada di `src/ai/` dengan satu antarmuka `suggest(prompt)`, jadi penyedia lain bisa ditambahkan di `src/ai/provider.ts`.
 
-## Alur kerja video: referensi → video jadi
+## Alur tercepat: gabungkan referensi di Claude
+
+1. Referensi → **Papan Racik & Utama** → **Cara cepat: gabungkan di Claude**. Isi brief, lalu ketuk *Salin prompt*.
+2. Di claude.ai: tempel prompt + lampirkan semua video referensi. Claude membuat satu video contoh dengan sound.
+3. Unduh videonya, lalu simpan di **Video contoh** pada Referensi Utama.
+4. Ketuk **Ambil hasil dari Claude**, isi jadwal syuting, lalu tempel prompt-nya **di chat Claude yang sama** dan tempel balik jawabannya. Segmen, checklist shoot (lengkap dengan jadwal), dan resep CapCut terisi sekaligus.
+5. Di lokasi: **Mode Lapangan** menampilkan kartu "Berikutnya", dan tombol ▶ memutar potongan contoh untuk shot itu.
+
+Panduan singkat juga ada di dalam aplikasi (ikon **?** di Hari Ini).
+
+## Alur kerja video (manual): referensi → video jadi
 
 1. **Pustaka referensi**: tempel link atau unggah video yang kamu simpan sendiri (aplikasi tidak mengunduh dari IG/TikTok). Bedah dengan Amati → Tiru → Modifikasi, dan ambil frame penting.
 2. **Papan Racik**: pilih beberapa referensi, masukkan ke slot Hook / Isi / Klimaks / Penutup, tandai detik mulai & selesai, dan pilih yang diambil (gerakan, transisi, warna…).

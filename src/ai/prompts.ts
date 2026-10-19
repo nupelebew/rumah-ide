@@ -18,6 +18,7 @@ export const TASK_LABEL: Record<BridgeTask, string> = {
   shoot: 'Checklist shoot detail',
   edit: 'Resep edit CapCut',
   review: 'Rangkum minggu ini',
+  harvest: 'Ambil hasil dari Claude',
 }
 
 /** Contoh bentuk tiap aksi — hanya yang relevan untuk tugas itu yang dimasukkan ke prompt. */
@@ -30,8 +31,8 @@ const SHAPES: Record<ActionType, string> = {
   group: `{"type":"group","name":"<nama kelompok singkat>","ideaIds":["<id>","<id>"]}`,
   atm_fill: `{"type":"atm_fill","refId":"<id>","amati":{${AMATI_FIELDS.map((f) => `"${f.key}":"…"`).join(',')}}}`,
   storyboard: `{"type":"storyboard","ideaId":"<id>","scenes":[{"title":"…","duration":3,"visual":"…","audio":"…","text":"…"}]}`,
-  master: `{"type":"master","masterId":"<id bila ada>","mixId":"<id bila ada>","title":"…","summary":"…","segments":[{"slot":"Hook","label":"…","duration":2,"description":"…","refNo":"R1","shotType":"…","angle":"…","lens":"…","fps":"…","movement":"…","transition":"…","text":"…","sound":"…","color":"…"}]}`,
-  shoot_checklist: `{"type":"shoot_checklist","shootId":"<id bila ada>","masterId":"<id>","title":"…","shots":[{"label":"…","description":"…","shotType":"…","angle":"…","lens":"…","fps":"…","movement":"…","duration":3}],"prep":["…"]}`,
+  master: `{"type":"master","masterId":"<id bila ada>","mixId":"<id bila ada>","title":"…","summary":"…","segments":[{"slot":"Hook","label":"…","duration":2,"description":"…","refNo":"R1","sourceIn":1,"sourceOut":3,"shotType":"…","angle":"…","lens":"…","fps":"…","movement":"…","transition":"…","text":"…","sound":"…","color":"…"}]}`,
+  shoot_checklist: `{"type":"shoot_checklist","shootId":"<id bila ada>","masterId":"<id>","title":"…","date":"YYYY-MM-DD","start":"HH:MM","end":"HH:MM","location":"…","shots":[{"label":"…","description":"…","shotType":"…","angle":"…","lens":"…","fps":"…","movement":"…","duration":3}],"prep":["…"]}`,
   edit_recipe: `{"type":"edit_recipe","masterId":"<id>","steps":[{"segment":"…","steps":["langkah 1","langkah 2"]}]}`,
   review_summary: `{"type":"review_summary","week":"YYYY-MM-DD","text":"…"}`,
   note: `{"type":"note","text":"…"}`,
@@ -50,6 +51,7 @@ const ALLOWED: Record<BridgeTask, ActionType[]> = {
   shoot: ['shoot_checklist', 'note'],
   edit: ['edit_recipe', 'note'],
   review: ['review_summary', 'note'],
+  harvest: ['master', 'shoot_checklist', 'edit_recipe', 'note'],
 }
 
 const clean = (o: unknown) => JSON.stringify(o, (_, v) => (v === '' || v === undefined || (Array.isArray(v) && !v.length) ? undefined : v))
@@ -152,6 +154,18 @@ async function build(input: BridgeInput): Promise<Built> {
         data: { referensiUtama: master && { judul: master.title, rasio: master.aspect, ringkasan: master.summary, segmen: master.segments.map(({ id: _id, frameId: _f, ...s }) => s) } },
       }
     }
+    case 'harvest': {
+      const master = await db.masters.get(input.masterId!)
+      const plan = input.shootPlan ?? {}
+      return {
+        task: `Kita lanjutkan dari video gabungan yang barusan kamu buat di percakapan ini (dari referensi R1, R2, dst. yang saya kirim). Sekarang ubah jadi rencana kerja supaya saya bisa SYUTING ULANG versi saya sendiri dan mengeditnya. Kirim TIGA aksi sekaligus:
+1. "master" dengan masterId "${input.masterId}": satu segmen per potongan di video gabungan, urut sesuai video. Isi refNo + sourceIn/sourceOut (detik di video sumber), durasi di video gabungan, dan detail sinematografi yang AKURAT untuk ditiru: jenis shot, sudut, lensa/focal length, fps (60/120 bila slow-mo), gerakan kamera, transisi ke segmen berikutnya, teks layar, sound/beat, warna. Pakai alat yang saya punya.
+2. "shoot_checklist" dengan masterId "${input.masterId}"${plan.date ? `, date "${plan.date}"` : ''}${plan.start ? `, start "${plan.start}"` : ''}${plan.end ? `, end "${plan.end}"` : ''}${plan.location ? `, location "${plan.location}"` : ''}: semua shot yang harus saya ambil, diurutkan supaya efisien di lokasi dan sesuai cahaya pada jam itu, plus shot cadangan/B-roll penting. Lalu "prep": persiapan alat & setting kamera.
+3. "edit_recipe" dengan masterId "${input.masterId}": langkah edit di CapCut (HP) per segmen supaya hasilnya mirip video gabungan: potong ikut beat, speed ramp, transisi, teks, sound, grading.
+Kalau ada yang kamu ragukan (mis. detik sumber), tandai "(?)" di description.`,
+        data: { referensiUtama: master && { id: master.id, judul: master.title, ringkasan: master.summary, rasio: master.aspect }, rencanaSyuting: plan, alat: await gear() },
+      }
+    }
     case 'review': {
       const week = input.week!
       const s = await weekSummary(week)
@@ -196,4 +210,40 @@ ${allowed.map((t) => `- ${SHAPES[t]}`).join('\n')}
 4. Pakai id persis seperti di Data. Jangan mengarang id.
 5. Jangan sertakan komentar di dalam JSON. Durasi dalam detik (angka).`
   return { prompt, attach: b.attach }
+}
+
+export interface MergeBrief {
+  title: string
+  brief: string
+  refCount: number
+  duration: number
+  aspect: string
+  mood: string[]
+  sound: 'ref' | 'claude' | 'none'
+}
+
+/** Prompt pembuka di Claude: gabungkan beberapa video referensi jadi satu video contoh (dengan sound). */
+export function mergeStartPrompt(b: MergeBrief): string {
+  const sound =
+    b.sound === 'ref'
+      ? 'Pakai audio/musik dari referensi yang ritmenya paling cocok (sebutkan dari R berapa), dan potong mengikuti beat-nya.'
+      : b.sound === 'claude'
+        ? 'Pilih sendiri audio terbaik dari referensi yang ada (boleh campuran), potong mengikuti beat.'
+        : 'Tanpa audio (saya isi musik sendiri), tapi tetap susun ritme potongan seolah ada beat.'
+  return `Saya videografer & editor. Saya lampirkan ${b.refCount || 'beberapa'} video referensi. Beri nomor sesuai urutan lampiran: R1, R2, dst.
+
+## Video yang saya mau
+- Judul: ${b.title || '(belum ada)'}
+- Brief: ${b.brief || '(bebas, pilih yang paling menarik)'}
+- Durasi: ±${b.duration} detik, rasio ${b.aspect}${b.mood.length ? `
+- Nuansa: ${b.mood.join(', ')}` : ''}
+
+## Langkah
+1. Analisis tiap video (ambil frame sendiri bila perlu): ringkas isi R1, R2, … dalam 1 baris, dan tandai momen terbaiknya dengan detik.
+2. Usulkan susunan Hook → Isi → Klimaks → Penutup: potongan mana dari R berapa, detik berapa sampai berapa, dan kenapa. Tidak semua referensi harus dipakai.
+3. Rakit jadi SATU video MP4 ${b.aspect}, ±${b.duration} detik. ${sound}
+4. Buat dua versi: (a) dengan label kecil di pojok "R# · detik sumber · nama segmen" sebagai panduan, (b) versi bersih tanpa label.
+5. Tampilkan tabel susunan akhir (urutan, R#, detik sumber, durasi di video jadi).
+
+Nanti setelah videonya jadi, saya akan minta kamu mengubahnya jadi daftar shot & resep edit untuk aplikasi saya — jadi ingat susunannya.`
 }

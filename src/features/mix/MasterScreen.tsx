@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowDown, ArrowUp, ClipboardCheck, Film, Package, Plus, Scissors, Trash2, Upload, Lightbulb, RotateCcw } from 'lucide-react'
+import { ArrowDown, ArrowUp, ClipboardCheck, Film, Package, Plus, Scissors, Trash2, Upload, Lightbulb, RotateCcw, Share2 } from 'lucide-react'
 import { Page } from '../../components/Layout'
 import { AutoField, Button, CheckRow, Choice, Empty, IconButton, Label, PageHeader, SampleBadge, Section, cx } from '../../components/ui'
 import { Thumb, VideoPlayer } from '../../components/Media'
@@ -14,11 +14,12 @@ import type { EditStep, Master, Segment } from '../../db/types'
 import { navigate } from '../../lib/router'
 import { downloadBlob, pickFiles, shareFiles } from '../../lib/file'
 import { formatTimecode, toDateKey, addDays, relativeDay } from '../../lib/dates'
-import { formatBytes } from '../../lib/video'
+import { formatBytes, labelFrame } from '../../lib/video'
 import { basicEditRecipe } from './mixOps'
 import { buildRemotionPack } from './remotionPack'
 import { createShootFromMaster } from '../shoot/shootOps'
 import { BridgeButton } from '../bridge/BridgeButton'
+import { ClaudeSteps, HarvestButton } from './ClaudeFlow'
 
 const SLOT_COLOR = ['bg-accent', 'bg-ink', 'bg-ink-3', 'bg-warn', 'bg-ok']
 
@@ -58,6 +59,24 @@ export default function MasterScreen({ id }: { id?: string }) {
     } finally {
       setPacking(false)
     }
+  }
+  const shareFrames = async () => {
+    const files: File[] = []
+    for (const [i, seg] of master.segments.entries()) {
+      if (!seg.frameId) continue
+      const m = await db.media.get(seg.frameId)
+      if (!m) continue
+      const no = String(i + 1).padStart(2, '0')
+      const src = seg.inSec !== undefined ? ` ${formatTimecode(seg.inSec)}–${formatTimecode(seg.outSec ?? seg.inSec + seg.durationSec)}` : ''
+      const blob = await labelFrame(m.blob, `S${no} · ${seg.slot}${src}`)
+      files.push(new File([blob], `S${no}-${seg.slot}.jpg`, { type: 'image/jpeg' }))
+    }
+    if (!files.length) return toast('Belum ada frame di segmen')
+    if (await shareFiles(files, master.title)) return
+    const { zipSync } = await import('fflate')
+    const entries = Object.fromEntries(await Promise.all(files.map(async (f) => [f.name, new Uint8Array(await f.arrayBuffer())] as const)))
+    downloadBlob(new Blob([zipSync(entries) as BlobPart], { type: 'application/zip' }), `frame-${master.title.slice(0, 30)}.zip`)
+    toast(`${files.length} frame diunduh (.zip)`)
   }
   const toIdea = async () => {
     const idea = newContentIdea({
@@ -106,6 +125,27 @@ export default function MasterScreen({ id }: { id?: string }) {
         />
       </div>
 
+      {!master.mixId && !master.segments.length && (
+        <div className="px-4 pt-3">
+          <ClaudeSteps master={master} />
+        </div>
+      )}
+
+      <Section title="Video contoh">
+        {master.videoId ? (
+          <div>
+            <VideoPlayer id={master.videoId} />
+            <Button variant="ghost" block size="sm" className="mt-1" onClick={uploadRender} icon={<RotateCcw size={16} />}>
+              Ganti video
+            </Button>
+          </div>
+        ) : (
+          <Button block icon={<Upload size={18} />} onClick={uploadRender}>
+            Simpan video contoh (hasil Claude / Remotion)
+          </Button>
+        )}
+      </Section>
+
       <Section title={<span>Alur <span className="font-mono text-sm font-normal text-ink-3">{total.toFixed(1)} dtk</span></span>}>
         {master.segments.length > 0 && (
           <>
@@ -147,35 +187,32 @@ export default function MasterScreen({ id }: { id?: string }) {
             </li>
           ))}
         </ol>
-        {!master.segments.length && <Empty title="Belum ada segmen" text="Deal dari Papan Racik, minta Claude menyusun, atau tambah segmen manual." />}
+        {!master.segments.length && <Empty title="Belum ada segmen" text="Terisi otomatis lewat “Ambil hasil dari Claude”, Deal dari Papan Racik, atau tambah manual." />}
         <Button variant="ghost" block className="mt-2 border-dashed border-line" icon={<Plus size={18} />} onClick={addSeg}>
           Tambah segmen
         </Button>
-        <div className="mt-2">
-          <BridgeButton input={{ task: 'master', masterId: master.id, mixId: master.mixId }} label="Minta Claude (Opus) susun detail shot" block />
-        </div>
-      </Section>
-
-      <Section title="Jadikan video">
-        <div className="space-y-2">
-          <Button variant="ink" size="lg" block icon={<Package size={20} />} onClick={pack} disabled={packing || !master.segments.length}>
-            {packing ? 'Menyusun paket…' : 'Paket Remotion untuk Claude Code'}
+        {master.segments.some((x) => x.frameId) && (
+          <Button variant="ghost" block className="mt-1" icon={<Share2 size={18} />} onClick={shareFrames}>
+            Bagikan semua frame (berlabel)
           </Button>
-          <p className="text-xs text-ink-3">Berisi video sumber, titik potong, frame, dan PROMPT.md. Pindahkan ke laptop, ekstrak, buka foldernya di Claude Code, lalu minta: “Kerjakan PROMPT.md”.</p>
-          {master.videoId ? (
-            <div className="pt-2">
-              <VideoPlayer id={master.videoId} />
-              <Button variant="ghost" block size="sm" className="mt-1" onClick={uploadRender} icon={<RotateCcw size={16} />}>
-                Ganti video
-              </Button>
-            </div>
+        )}
+        <div className="mt-2 space-y-2">
+          {master.mixId ? (
+            <BridgeButton input={{ task: 'master', masterId: master.id, mixId: master.mixId }} label="Minta Claude (Opus) susun detail shot" block />
           ) : (
-            <Button block icon={<Upload size={18} />} onClick={uploadRender}>
-              Simpan hasil render di sini
-            </Button>
+            master.segments.length > 0 && <HarvestButton master={master} variant="soft" label="Perbarui dari Claude (segmen + checklist + resep)" />
           )}
         </div>
       </Section>
+
+      {master.mixId && (
+        <Section title="Rakit video (opsional)">
+          <Button variant="ink" size="lg" block icon={<Package size={20} />} onClick={pack} disabled={packing || !master.segments.length}>
+            {packing ? 'Menyusun paket…' : 'Paket Remotion untuk Claude Code'}
+          </Button>
+          <p className="mt-2 text-xs text-ink-3">Berisi video sumber, titik potong, frame, dan PROMPT.md. Pindahkan ke laptop, ekstrak, buka foldernya di Claude Code, lalu minta: “Kerjakan PROMPT.md”. Hasilnya simpan di “Video contoh”.</p>
+        </Section>
+      )}
 
       <Section
         title={

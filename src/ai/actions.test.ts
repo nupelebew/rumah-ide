@@ -57,4 +57,10 @@ describe('normalizeAction', () => {
   it('atm_fill hanya menerima kunci amati yang dikenal', () => {
     expect(normalizeAction({ type: 'atm_fill', refId: 'r1', amati: { hook: 'Close-up', hacker: 'x' } })).toEqual({ type: 'atm_fill', refId: 'r1', amati: { hook: 'Close-up' } })
   })
+  it('shoot_checklist membawa jadwal; segmen membawa detik sumber', () => {
+    const a = normalizeAction({ type: 'shoot_checklist', masterId: 'm', date: '2026-10-19', start: '16.00', end: '18:00', location: 'Lapangan', shots: [{ label: 'A' }] })
+    expect(a).toMatchObject({ date: '2026-10-19', start: '16:00', end: '18:00', location: 'Lapangan' })
+    const m = normalizeAction({ type: 'master', segments: [{ slot: 'Hook', sourceIn: '1,5', sourceOut: 3 }] })
+    if (typeof m !== 'string' && m.type === 'master') expect(m.segments[0]).toMatchObject({ sourceIn: 1.5, sourceOut: 3 })
+  })
 })

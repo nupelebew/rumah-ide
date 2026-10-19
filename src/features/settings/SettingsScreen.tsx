@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Download, Plus, Trash2, Upload, ShieldCheck, Eraser, RotateCcw } from 'lucide-react'
+import { Download, Plus, Trash2, Upload, ShieldCheck, Eraser, RotateCcw, BookOpen } from 'lucide-react'
+import { navigate } from '../../lib/router'
 import { Page } from '../../components/Layout'
 import { AutoField, Button, Choice, IconButton, Label, ListEditor, PageHeader, Section } from '../../components/ui'
 import { Confirm, Sheet } from '../../components/Sheet'
@@ -32,6 +33,11 @@ export default function SettingsScreen() {
   return (
     <Page>
       <PageHeader title="Pengaturan" backTo="hari-ini" />
+      <div className="px-4">
+        <Button block icon={<BookOpen size={18} />} onClick={() => navigate('panduan')}>
+          Panduan pemakaian
+        </Button>
+      </div>
       <Section title="Tampilan">
         <Choice<ThemePref>
           options={[

@@ -14,6 +14,7 @@ export type BridgeTask =
   | 'shoot'
   | 'edit'
   | 'review'
+  | 'harvest'
 
 export interface BridgeInput {
   task: BridgeTask
@@ -23,4 +24,6 @@ export interface BridgeInput {
   masterId?: ID
   shootId?: ID
   week?: string
+  /** Rencana syuting yang ikut dikirim (dipakai tugas "Ambil hasil dari Claude") */
+  shootPlan?: { date?: string; start?: string; end?: string; location?: string }
 }
