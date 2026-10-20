@@ -23,6 +23,8 @@ import { HarvestButton, MergeStartSheet } from '../mix/ClaudeFlow'
 import { BridgeButton } from '../bridge/BridgeButton'
 import { addRefFromUrl, addRefsFromFiles } from '../atm/refOps'
 import { STEPS, ensureMaster, goToStep, openManualMix, projectRefs, projectShoot, stepOf } from './projectOps'
+import { PlannerCard } from '../sheet/PlannerCard'
+import { masterOf, useSheetConfig } from '../sheet/sync'
 
 export default function ProjectScreen({ id }: { id: string }) {
   const idea = useLiveQuery(() => db.ideas.get(id), [id])
@@ -96,12 +98,9 @@ export default function ProjectScreen({ id }: { id: string }) {
             )
           })}
         </ol>
-        {finished && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl bg-ok-soft p-3 text-sm font-semibold">
-            <PartyPopper size={18} /> Proyek selesai.
-          </div>
-        )}
+        {finished && <UploadedBanner idea={idea} />}
       </div>
+      <PlannerCard idea={idea} />
 
       {shown === 0 && <StepKonsep idea={idea} />}
       {shown === 1 && <StepReferensi idea={idea} refs={refs ?? []} />}
@@ -529,5 +528,23 @@ function StepEdit({ idea, master }: { idea: Idea; master?: Master }) {
         <EditRecipe master={master} />
       </div>
     </>
+  )
+}
+
+/** Setelah proyek selesai: satu ketuk untuk menandai sudah diposting (status "Selesai di Upload"). */
+function UploadedBanner({ idea }: { idea: Idea }) {
+  const cfg = useSheetConfig()
+  const uploaded = masterOf(cfg).status[4] ?? 'Selesai di Upload'
+  const done = idea.planner?.status === uploaded
+  return (
+    <div className="mt-3 flex items-center gap-2 rounded-xl bg-ok-soft p-3 text-sm font-semibold">
+      <PartyPopper size={18} className="shrink-0" />
+      <span className="flex-1">{done ? 'Sudah diupload.' : 'Proyek selesai. Sudah diposting?'}</span>
+      {!done && (
+        <Button size="sm" variant="ink" onClick={() => patch(db.ideas, idea.id, { planner: { ...idea.planner, status: uploaded } })}>
+          Sudah diupload
+        </Button>
+      )}
+    </div>
   )
 }

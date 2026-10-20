@@ -25,6 +25,7 @@ import ProjectScreen from './features/project/ProjectScreen'
 import ProjectList from './features/project/ProjectList'
 import { ensureDefaults, seedSamples } from './db/seed'
 import { applyThemeSetting } from './features/settings/theme'
+import { startSheetSync } from './features/sheet/sync'
 
 function Screen({ route }: { route: string[] }) {
   const [a, b] = route
@@ -66,7 +67,7 @@ function Screen({ route }: { route: string[] }) {
 
 // Dijalankan sekali saja walau efek React terpanggil dua kali (StrictMode).
 let booting: Promise<void> | null = null
-const boot = () => (booting ??= ensureDefaults().then(seedSamples))
+const boot = () => (booting ??= ensureDefaults().then(seedSamples).then(startSheetSync))
 
 /** Teks yang dibagikan dari aplikasi lain (Web Share Target) masuk lewat ?text=&url= */
 function readShared(): string {

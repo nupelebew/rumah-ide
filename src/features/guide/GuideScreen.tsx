@@ -32,6 +32,25 @@ const FLOW: Topic[] = [
     ),
   },
   {
+    title: 'Rekap ke Google Sheets (content planner)',
+    go: { label: 'Sambungkan', to: 'atur?bagian=spreadsheet' },
+    body: (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>
+          Sambungkan sekali di <b>Pengaturan → Spreadsheet</b> (ikuti 4 langkah, tombol “Salin skrip” tersedia).
+        </li>
+        <li>
+          Setiap proyek otomatis jadi satu baris di sheet <b>Planner</b> dan ikut diperbarui saat maju langkah.
+        </li>
+        <li>
+          Isi akun, tanggal upload, jenis, pillar, PIC, caption lewat kartu <b>Planner</b> di halaman proyek. Pilihannya diambil dari sheet Master.
+        </li>
+        <li>Status otomatis: Konsep = Proses Writing, Referensi–Syuting = Proses Design, Edit = Proses Revisi, Selesai = Siap Upload, lalu “Sudah diupload”.</li>
+        <li>Offline? Perubahan diantrekan dan dikirim saat online lagi.</li>
+      </ul>
+    ),
+  },
+  {
     title: 'Tangkap & rapikan ide',
     go: { label: 'Tangkap', to: 'tangkap' },
     body: (

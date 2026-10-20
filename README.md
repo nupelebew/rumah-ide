@@ -42,6 +42,23 @@ Fitur "Tambahkan ke Layar Utama" dan mode offline **wajib lewat HTTPS**. Membuka
 
 Di Android, Rumah Ide juga muncul di menu **Bagikan**. Link dari TikTok/IG, atau jawaban dari aplikasi Claude, bisa langsung dikirim ke Rumah Ide.
 
+## Rekap otomatis ke Google Sheets (content planner)
+
+Setiap proyek bisa otomatis tercatat sebagai satu baris di sheet **Planner** (format `Content_Planner_Multi_Akun.xlsx`), dan barisnya ikut diperbarui saat proyek maju.
+
+1. Unggah file planner ke Google Drive, buka, lalu **File → Simpan sebagai Google Spreadsheet**.
+2. **Ekstensi → Apps Script**: hapus isinya, lalu tempel isi [`scripts/google-sheets/Code.gs`](scripts/google-sheets/Code.gs). Di aplikasi juga ada tombol *Salin skrip*. Lalu Simpan.
+3. **Terapkan → Deployment baru → Aplikasi web**. Jalankan sebagai *Saya*, akses *Siapa saja*. Terapkan, lalu salin URL yang berakhiran `/exec`.
+4. Di Rumah Ide: **Pengaturan → Spreadsheet**, tempel URL-nya, lalu ketuk **Sambungkan**.
+
+Catatan:
+- Kolom A–J diisi sesuai planner. Kolom K berisi **ID Rumah Ide**, supaya baris yang sama yang diperbarui, tidak dobel.
+- Pilihan Akun/PIC/Pillar/Jenis/Status dibaca dari sheet **Master**.
+- Status otomatis: Konsep = Proses Writing, Referensi–Syuting = Proses Design, Edit = Proses Revisi, Selesai = Siap Upload, lalu tombol *Sudah diupload* = Selesai di Upload.
+- Sinkronnya satu arah (aplikasi → sheet). Mengubah sheet langsung tidak mengubah aplikasi, dan bisa tertimpa saat proyek diubah lagi di aplikasi.
+- URL Apps Script berfungsi seperti kunci. URL ini tidak ikut di file ekspor; jangan dibagikan.
+- Sheet Ringkasan menghitung baris 5–204, jadi lebih dari 200 proyek perlu rentang rumusnya diperluas.
+
 ## Ekspor & impor data (cadangan)
 
 **Pengaturan → Data & cadangan**

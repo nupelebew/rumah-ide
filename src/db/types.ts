@@ -52,10 +52,25 @@ export interface Idea extends Base {
   /** Proyek: nama klien & target durasi (detik) */
   client?: string
   durationTarget?: number
+  /** Kolom content planner (Google Sheets) */
+  planner?: PlannerFields
   /** Ide Keseharian */
   categoryId?: ID
   convertedTo?: { type: 'task' | 'habit' | 'decision'; id: ID }
   archived?: boolean
+}
+
+export interface PlannerFields {
+  akun?: string
+  pic?: string
+  pillar?: string
+  jenis?: string
+  /** YYYY-MM-DD */
+  uploadDate?: string
+  scriptDeadline?: string
+  caption?: string
+  /** Status manual (On Hold, Reschedule, Selesai di Upload, …). Kosong = otomatis dari langkah. */
+  status?: string
 }
 
 /* ---------- Referensi & ATM ---------- */

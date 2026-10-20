@@ -5,7 +5,7 @@ export const BACKUP_APP = 'rumah-ide'
 export const BACKUP_VERSION = 1
 
 /** Kunci pengaturan yang tidak pernah ikut diekspor (rahasia milik perangkat ini). */
-const PRIVATE_SETTINGS = ['ai.apiKey']
+const PRIVATE_SETTINGS = ['ai.apiKey', 'sheet.url', 'sheet.state']
 
 interface MediaJson extends Omit<Media, 'blob'> {
   data: string

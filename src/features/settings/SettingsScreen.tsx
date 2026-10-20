@@ -17,6 +17,7 @@ import { formatBytes } from '../../lib/video'
 import { now, uid } from '../../lib/id'
 import { getThemePref, setThemePref, type ThemePref } from './theme'
 import { AiSettings } from '../../ai/AiSettings'
+import { SheetSettings } from '../sheet/SheetSettings'
 
 const GEAR_TYPES: { value: GearType; label: string }[] = [
   { value: 'kamera', label: 'Kamera' },
@@ -55,6 +56,7 @@ export default function SettingsScreen() {
       </Section>
       <GearSection />
       <AiSettings />
+      <SheetSettings />
       <TemplatesSection />
       <PatternsSection />
       <CategoriesSection />
