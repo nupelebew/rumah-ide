@@ -31,7 +31,7 @@ export default function ContentBoard() {
   const cols = useRef<HTMLDivElement>(null)
 
   const create = async () => {
-    const i = newContentIdea({ title: 'Ide konten baru' })
+    const i = newContentIdea({ title: 'Proyek baru' })
     await db.ideas.add(i)
     navigate(`konten/${i.id}`)
   }
@@ -53,16 +53,15 @@ export default function ContentBoard() {
   return (
     <Page>
       <PageHeader
-        kicker="Mode 3"
-        title="Ide Konten"
+        kicker="Proyek · tampilan papan"
+        title="Papan"
+        backTo="konten"
         actions={
           <Button size="sm" variant="ink" icon={<Plus size={16} />} onClick={create}>
             Baru
           </Button>
         }
-      >
-        <ContentTabs value="konten" />
-      </PageHeader>
+      />
 
       <div className="no-scrollbar flex gap-1.5 overflow-x-auto px-4 pb-2">
         {STAGES.map((s, i) => {

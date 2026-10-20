@@ -49,6 +49,9 @@ export interface Idea extends Base {
   stage?: ContentStage
   storyboard?: Scene[]
   masterId?: ID
+  /** Proyek: nama klien & target durasi (detik) */
+  client?: string
+  durationTarget?: number
   /** Ide Keseharian */
   categoryId?: ID
   convertedTo?: { type: 'task' | 'habit' | 'decision'; id: ID }
@@ -131,6 +134,8 @@ export interface Mix extends Base {
   items: MixItem[]
   status: 'draft' | 'deal'
   masterId?: ID
+  /** Proyek (Ide Konten) asal papan ini */
+  ideaId?: ID
 }
 
 export interface Segment {

@@ -37,18 +37,18 @@ export async function toggleTask(t: Task) {
 }
 
 export default function DailyScreen() {
-  const [tab, setTab] = useState<Tab>((queryParam('tab') as Tab) || 'ide')
+  const [tab, setTab] = useState<Tab>((queryParam('tab') as Tab) || 'tugas')
   const cats = useLiveQuery(() => db.categories.orderBy('name').toArray(), []) ?? []
   return (
     <Page>
-      <PageHeader kicker="Mode 4" title="Ide Keseharian">
+      <PageHeader kicker="Kuliah, kerja, hidup" title="Harian">
         <Segmented<Tab>
           value={tab}
           onChange={setTab}
           options={[
-            { value: 'ide', label: 'Ide' },
             { value: 'tugas', label: 'Tugas' },
             { value: 'kebiasaan', label: 'Kebiasaan' },
+            { value: 'ide', label: 'Ide' },
             { value: 'keputusan', label: 'Keputusan' },
           ]}
         />

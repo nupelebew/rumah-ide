@@ -14,6 +14,8 @@ import { currentStreak } from '../../lib/streak'
 import { toast } from '../../components/Toast'
 import { toggleHabitToday, toggleTask } from '../daily/DailyScreen'
 import { STAGE_LABEL } from '../content/contentMeta'
+import { NewProjectSheet, ProjectCard, loadProjects } from '../project/ProjectList'
+import { STEPS, stepOf } from '../project/projectOps'
 
 interface PickInfo extends EntityInfo {
   done?: boolean
@@ -40,17 +42,30 @@ export default function TodayScreen() {
     return out
   }, [today])
   const glance = useLiveQuery(async () => {
-    const [raw, tasks, habits, shoots, review] = await Promise.all([
+    const [raw, tasks, habits, shoots, review, projects] = await Promise.all([
       db.ideas.where('kind').equals('raw').count(),
       db.tasks.filter((t) => !t.done && !!t.due && t.due <= today).toArray(),
       db.habits.filter((h) => !h.archived).toArray(),
       db.shoots.where('date').equals(today).toArray(),
       db.reviews.get(weekStart(today)),
+      loadProjects(),
     ])
-    return { raw, tasks, habits, shoots, reviewed: !!review }
+    const active = projects.filter((r) => stepOf(r.idea.stage) < STEPS.length)
+    // syuting hari ini dulu, lalu yang terakhir disentuh
+    active.sort((a, b) => Number(b.shoot?.date === today) - Number(a.shoot?.date === today))
+    const projectShootIds = new Set(active.map((r) => r.shoot?.id))
+    return {
+      raw,
+      tasks,
+      habits,
+      shoots: shoots.filter((x) => !projectShootIds.has(x.id)),
+      reviewed: !!review,
+      projects: active.slice(0, 3),
+      moreProjects: Math.max(0, active.length - 3),
+    }
   }, [today])
   const [picking, setPicking] = useState(false)
-  const slots = Array.from({ length: TODAY_MAX }, (_, i) => picks?.[i])
+  const [newProject, setNewProject] = useState(false)
   const doneCount = picks?.filter((p) => p.done).length ?? 0
   const dow = new Date().getDay()
 
@@ -76,120 +91,143 @@ export default function TodayScreen() {
         }
       />
       <GuideBanner />
-      <div className="px-4">
-        <p className="mb-3 text-sm text-ink-2">
-          {picks?.length ? `${doneCount} dari ${picks.length} beres. Fokus ke ini dulu, sisanya bisa nanti.` : 'Pilih maksimal 3 hal terpenting hari ini. Sisanya biar menunggu.'}
-        </p>
-        <ol className="space-y-2.5">
-          {slots.map((p, i) =>
-            p ? (
-              <li key={p.type + p.id} className={cx('sketch flex min-h-20 items-center gap-3 p-3', p.done && 'opacity-70')}>
-                <span className={cx('font-display text-3xl leading-none font-bold', p.done ? 'text-ok' : 'text-accent')}>{i + 1}</span>
-                <div className="min-w-0 flex-1">
-                  {p.type === 'task' || p.type === 'habit' ? (
-                    <CheckRow checked={!!p.done} onToggle={() => toggleDone(p)} sub={TYPE_LABEL[p.type]}>
-                      {p.title}
-                    </CheckRow>
-                  ) : (
-                    <button type="button" onClick={() => navigate(p.route)} className="block w-full py-1 text-left">
-                      <div className="kicker">{p.sub}</div>
-                      <div className={cx('font-semibold break-words', p.done && 'line-through')}>{p.title}</div>
-                    </button>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  aria-label="Lepas dari Hari Ini"
-                  onClick={() => togglePick(p.type, p.id)}
-                  className="flex size-11 shrink-0 items-center justify-center rounded-xl text-ink-3 active:bg-paper-2"
-                >
-                  <X size={19} />
-                </button>
-              </li>
-            ) : (
-              <li key={`empty-${i}`}>
-                <button
-                  type="button"
-                  onClick={() => setPicking(true)}
-                  className="flex min-h-20 w-full items-center gap-3 rounded-[14px] border-[1.5px] border-dashed border-ink-3 px-3 text-left text-ink-2 active:bg-paper-2"
-                >
-                  <span className="font-display text-3xl leading-none font-bold text-line">{i + 1}</span>
-                  <span className="flex-1 font-medium">Pilih prioritas</span>
-                  <Plus size={20} />
-                </button>
-              </li>
-            ),
-          )}
-        </ol>
-      </div>
 
       {glance && (
-        <Section title="Sekilas">
-          <div className="space-y-2">
-            {glance.shoots.map((s) => (
-              <button key={s.id} type="button" onClick={() => navigate(`syuting/${s.id}`)} className="sketch flex w-full items-center gap-3 border-accent p-3 text-left">
-                <ClipboardCheck className="shrink-0 text-accent" size={22} />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold">Syuting: {s.title}</span>
-                  <span className="font-mono text-xs text-ink-3">
-                    {s.start ?? ''} · {s.shots.filter((x) => x.done).length}/{s.shots.length} shot
-                  </span>
-                </span>
-                <ArrowRight size={18} />
+        <Section
+          title="Lanjutkan"
+          action={
+            glance.moreProjects > 0 && (
+              <button type="button" onClick={() => navigate('konten')} className="min-h-11 text-sm font-semibold text-ink-2">
+                +{glance.moreProjects} lagi →
               </button>
-            ))}
-            {glance.habits.length > 0 && (
-              <div className="sketch p-3">
-                <div className="kicker mb-1">Kebiasaan</div>
-                <div className="flex flex-wrap gap-2">
-                  {glance.habits.map((h) => {
-                    const on = h.checkins.includes(today)
-                    return (
-                      <button
-                        key={h.id}
-                        type="button"
-                        onClick={() => toggleHabitToday(h)}
-                        aria-pressed={on}
-                        className={cx('inline-flex min-h-11 items-center gap-1.5 rounded-full border-[1.5px] px-3 text-sm font-medium', on ? 'border-ok bg-ok-soft' : 'border-line bg-card')}
-                      >
-                        <Flame size={16} className={on ? 'text-ok' : 'text-ink-3'} fill={on ? 'currentColor' : 'none'} />
-                        {h.title}
-                        <span className="font-mono text-xs text-ink-3">{currentStreak(h.checkins, today)}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+            )
+          }
+        >
+          {glance.projects.length ? (
+            <ul className="space-y-2">
+              {glance.projects.map((r) => (
+                <ProjectCard key={r.idea.id} row={r} />
+              ))}
+            </ul>
+          ) : (
+            <Button variant="primary" size="lg" block icon={<Plus size={20} />} onClick={() => setNewProject(true)}>
+              Mulai proyek video
+            </Button>
+          )}
+          {glance.shoots.map((s) => (
+            <button key={s.id} type="button" onClick={() => navigate(`syuting/${s.id}`)} className="sketch mt-2 flex w-full items-center gap-3 border-accent p-3 text-left">
+              <ClipboardCheck className="shrink-0 text-accent" size={22} />
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">Syuting: {s.title}</span>
+                <span className="font-mono text-xs text-ink-3">
+                  {s.start ?? ''} · {s.shots.filter((x) => x.done).length}/{s.shots.length} shot
+                </span>
+              </span>
+              <ArrowRight size={18} />
+            </button>
+          ))}
+        </Section>
+      )}
+
+      <Section title={<span>Prioritas {picks?.length ? <span className="font-mono text-sm font-normal text-ink-3">{doneCount}/{picks.length}</span> : null}</span>}>
+        <ol className="space-y-2">
+          {(picks ?? []).map((p, i) => (
+            <li key={p.type + p.id} className={cx('sketch flex min-h-16 items-center gap-3 px-3 py-2', p.done && 'opacity-70')}>
+              <span className={cx('font-display text-2xl leading-none font-bold', p.done ? 'text-ok' : 'text-accent')}>{i + 1}</span>
+              <div className="min-w-0 flex-1">
+                {p.type === 'task' || p.type === 'habit' ? (
+                  <CheckRow checked={!!p.done} onToggle={() => toggleDone(p)} sub={TYPE_LABEL[p.type]}>
+                    {p.title}
+                  </CheckRow>
+                ) : (
+                  <button type="button" onClick={() => navigate(p.route)} className="block w-full py-1 text-left">
+                    <div className="kicker">{p.sub}</div>
+                    <div className={cx('font-semibold break-words', p.done && 'line-through')}>{p.title}</div>
+                  </button>
+                )}
               </div>
-            )}
-            {glance.tasks.length > 0 && (
-              <button type="button" onClick={() => navigate('harian?tab=tugas')} className="sketch flex w-full items-center gap-3 p-3 text-left">
-                <span className="font-display text-2xl font-bold">{glance.tasks.length}</span>
-                <span className="flex-1 text-sm">tugas jatuh tempo hari ini / terlambat</span>
-                <ArrowRight size={18} />
+              <button type="button" aria-label="Lepas dari Hari Ini" onClick={() => togglePick(p.type, p.id)} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-ink-3 active:bg-paper-2">
+                <X size={19} />
               </button>
-            )}
-            {glance.raw > 0 && (
-              <button type="button" onClick={() => navigate('rapikan')} className="sketch flex w-full items-center gap-3 p-3 text-left">
-                <Inbox size={22} className="shrink-0 text-ink-2" />
-                <span className="flex-1 text-sm">
-                  <b>{glance.raw} ide mentah</b> menunggu dirapikan
-                </span>
-                <ArrowRight size={18} />
-              </button>
-            )}
-            {!glance.reviewed && (dow === 0 || dow === 1 || dow === 5 || dow === 6) && (
-              <button type="button" onClick={() => navigate('review')} className="sketch flex w-full items-center gap-3 bg-paper-2 p-3 text-left">
-                <History size={22} className="shrink-0" />
-                <span className="flex-1 text-sm">
-                  <b>Review Mingguan</b> belum diisi. 2 menit saja.
-                </span>
-                <ArrowRight size={18} />
-              </button>
-            )}
+            </li>
+          ))}
+        </ol>
+        {(picks?.length ?? 0) < TODAY_MAX && (
+          <button
+            type="button"
+            onClick={() => setPicking(true)}
+            className="mt-2 flex min-h-12 w-full items-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-ink-3 px-3 text-left text-sm font-medium text-ink-2 active:bg-paper-2"
+          >
+            <Plus size={18} /> {picks?.length ? 'Tambah prioritas' : 'Pilih sampai 3 hal terpenting hari ini'}
+          </button>
+        )}
+      </Section>
+
+      {glance && (glance.tasks.length > 0 || glance.habits.length > 0) && (
+        <Section
+          title="Tugas & kebiasaan"
+          action={
+            <button type="button" onClick={() => navigate('harian')} className="min-h-11 text-sm font-semibold text-ink-2">
+              Semua →
+            </button>
+          }
+        >
+          {glance.tasks.length > 0 && (
+            <div className="sketch divide-y-[1.5px] divide-line px-3">
+              {glance.tasks.slice(0, 5).map((t) => (
+                <CheckRow key={t.id} checked={t.done} onToggle={() => toggleTask(t)} sub={t.due && t.due < today ? 'Terlambat' : undefined}>
+                  {t.title}
+                </CheckRow>
+              ))}
+            </div>
+          )}
+          {glance.habits.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {glance.habits.map((h) => {
+                const on = h.checkins.includes(today)
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => toggleHabitToday(h)}
+                    aria-pressed={on}
+                    className={cx('inline-flex min-h-11 items-center gap-1.5 rounded-full border-[1.5px] px-3 text-sm font-medium', on ? 'border-ok bg-ok-soft' : 'border-line bg-card')}
+                  >
+                    <Flame size={16} className={on ? 'text-ok' : 'text-ink-3'} fill={on ? 'currentColor' : 'none'} />
+                    {h.title}
+                    <span className="font-mono text-xs text-ink-3">{currentStreak(h.checkins, today)}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {glance && (
+        <Section>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => navigate(glance.raw ? 'rapikan' : 'tangkap')} className="sketch flex min-h-16 flex-col justify-center p-3 text-left">
+              <span className="flex items-center gap-1.5 text-sm font-semibold">
+                <Inbox size={17} /> Inbox
+              </span>
+              <span className="text-xs text-ink-3">{glance.raw ? `${glance.raw} ide perlu dirapikan` : 'Kosong'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('review')}
+              className={cx('sketch flex min-h-16 flex-col justify-center p-3 text-left', !glance.reviewed && (dow === 0 || dow === 6) && 'border-accent')}
+            >
+              <span className="flex items-center gap-1.5 text-sm font-semibold">
+                <History size={17} /> Review
+              </span>
+              <span className="text-xs text-ink-3">{glance.reviewed ? 'Minggu ini sudah' : 'Minggu ini belum'}</span>
+            </button>
           </div>
         </Section>
       )}
 
+      <NewProjectSheet open={newProject} onClose={() => setNewProject(false)} />
       <PickSheet open={picking} onClose={() => setPicking(false)} picked={picks?.map((p) => p.id) ?? []} />
     </Page>
   )
@@ -213,7 +251,7 @@ function PickSheet({ open, onClose, picked }: { open: boolean; onClose: () => vo
       },
       { title: 'Kebiasaan', items: habits.map((h) => ({ type: 'habit', id: h.id, title: h.title, sub: `streak ${currentStreak(h.checkins, today)}` })) },
       {
-        title: 'Ide Konten aktif',
+        title: 'Proyek aktif',
         items: ideas.filter((i) => i.kind === 'content' && i.stage !== 'selesai').map((i) => ({ type: 'idea', id: i.id, title: i.title, sub: STAGE_LABEL[i.stage ?? 'ide'] })),
       },
       { title: 'Ide keseharian', items: ideas.filter((i) => i.kind === 'daily').map((i) => ({ type: 'idea', id: i.id, title: i.title, sub: 'Keseharian' })) },

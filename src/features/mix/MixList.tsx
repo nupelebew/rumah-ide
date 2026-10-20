@@ -7,15 +7,12 @@ import { Sheet } from '../../components/Sheet'
 import { db } from '../../db/db'
 import { newMaster, newMix } from '../../db/factories'
 import { navigate } from '../../lib/router'
-import { RefTabs } from '../atm/RefLibrary'
-import { MergeStartSheet } from './ClaudeFlow'
 
 export default function MixList() {
   const mixes = useLiveQuery(() => db.mixes.orderBy('createdAt').reverse().toArray(), [])
   const masters = useLiveQuery(() => db.masters.orderBy('createdAt').reverse().toArray(), [])
   const [naming, setNaming] = useState<'mix' | 'master' | null>(null)
   const [title, setTitle] = useState('')
-  const [merging, setMerging] = useState(false)
 
   const create = async () => {
     const t = title.trim() || 'Racikan baru'
@@ -34,18 +31,16 @@ export default function MixList() {
 
   return (
     <Page>
-      <PageHeader kicker="Mode 2 · ATM" title="Racik Referensi">
-        <RefTabs value="racik" />
-      </PageHeader>
+      <PageHeader kicker="Referensi · lanjutan" title="Racikan & Referensi Utama" backTo="ref" />
 
       <div className="space-y-2 px-4">
-        <button type="button" onClick={() => setMerging(true)} className="sketch block w-full border-accent p-4 text-left active:translate-y-px">
+        <button type="button" onClick={() => navigate('konten')} className="sketch block w-full border-accent p-4 text-left active:translate-y-px">
           <div className="flex items-center gap-2">
             <Sparkles size={20} className="text-accent" />
-            <span className="font-display text-lg font-bold">Cara cepat: gabungkan di Claude</span>
+            <span className="font-display text-lg font-bold">Cara cepat ada di Proyek</span>
           </div>
-          <p className="mt-1 text-sm text-ink-2">Kirim semua video referensi ke Claude → dapat 1 video contoh + sound → tempel balik jadi daftar shot, checklist, & resep edit.</p>
-          <span className="mt-2 inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-ink">Disarankan</span>
+          <p className="mt-1 text-sm text-ink-2">Buat proyek → langkah 2 “Gabungkan di Claude”. Aplikasi menuntun sampai checklist & resep edit.</p>
+          <span className="mt-2 inline-block rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-ink">Buka Proyek →</span>
         </button>
         <div className="rounded-[14px] border-[1.5px] border-dashed border-line p-3 text-sm text-ink-2">
           <b className="text-ink">Cara manual: Papan Racik</b> — susun sendiri referensi ke slot Hook/Isi/Penutup, tandai detiknya, lalu Deal. Cocok kalau mau kontrol penuh atau tanpa internet.
@@ -116,7 +111,6 @@ export default function MixList() {
         )}
       </Section>
 
-      <MergeStartSheet open={merging} onClose={() => setMerging(false)} />
       <Sheet open={!!naming} onClose={() => setNaming(null)} title={naming === 'mix' ? 'Papan racik baru' : 'Referensi Utama kosong'}>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} placeholder="Judul (mis. “Reel tenis klien”)" className="field mb-3" />
         <Button variant="primary" size="lg" block onClick={create}>

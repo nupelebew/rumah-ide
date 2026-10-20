@@ -154,7 +154,7 @@ export default function ContentDetail({ id }: { id: string }) {
   )
 }
 
-function Storyboard({ idea }: { idea: Idea }) {
+export function Storyboard({ idea }: { idea: Idea }) {
   const scenes = idea.storyboard ?? []
   const [editing, setEditing] = useState<string | null>(null)
   const save = (storyboard: Scene[]) => patch(db.ideas, idea.id, { storyboard })

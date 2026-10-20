@@ -8,7 +8,6 @@ import { db } from '../../db/db'
 import { newContentIdea } from '../../db/factories'
 import { pickRandom } from '../../lib/id'
 import { navigate } from '../../lib/router'
-import { ContentTabs } from './ContentBoard'
 
 type Key = 'pola' | 'subjek' | 'gaya'
 
@@ -68,9 +67,7 @@ export default function RandomCombo() {
 
   return (
     <Page>
-      <PageHeader kicker="Mode 3" title="Acak Kombinasi">
-        <ContentTabs value="acak" />
-      </PageHeader>
+      <PageHeader kicker="Proyek" title="Acak Kombinasi" backTo="konten" />
       <div className="space-y-3 px-4">
         <p className="text-sm text-ink-2">Ambil satu pola, satu subjek, satu gaya dari simpananmu. Kunci yang sudah cocok, acak sisanya.</p>
         {pool && !pool.pola.length ? (

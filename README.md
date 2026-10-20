@@ -73,6 +73,16 @@ Jawaban Claude juga bisa ditempel di tombol **+** (Tangkap cepat). Aplikasi meng
 
 Modul AI ada di `src/ai/` dengan satu antarmuka `suggest(prompt)`, jadi penyedia lain bisa ditambahkan di `src/ai/provider.ts`.
 
+## Cara pakai singkat
+
+- **Hari Ini**: proyek yang sedang jalan, 3 prioritas, tugas & kebiasaan, Inbox.
+- **Proyek**: satu proyek = satu video, dituntun 5 langkah (Konsep → Referensi → Video contoh → Syuting → Edit). Tiap langkah punya satu tombol utama.
+- **+**: tangkap ide/link apa saja, kapan saja.
+- **Referensi**: pustaka & bedah ATM.
+- **Harian**: tugas, kebiasaan, ide keseharian, catatan keputusan.
+
+Fitur lanjutan (Papan Racik manual, Remotion, detail segmen, tampilan papan/kanban) tetap ada di "Opsi lain", menu ⋯, atau ikon di pojok kanan atas.
+
 ## Alur tercepat: gabungkan referensi di Claude
 
 1. Referensi → **Papan Racik & Utama** → **Cara cepat: gabungkan di Claude**. Isi brief, lalu ketuk *Salin prompt*.

@@ -6,7 +6,8 @@ import { toast } from '../../components/Toast'
 import { db } from '../../db/db'
 import { newMaster } from '../../db/factories'
 import { patch } from '../../db/repo'
-import type { Master } from '../../db/types'
+import type { Idea, Master } from '../../db/types'
+import { ensureMaster } from '../project/projectOps'
 import { copyText } from '../../lib/file'
 import { navigate } from '../../lib/router'
 import { addDays, relativeDay, toDateKey } from '../../lib/dates'
@@ -20,12 +21,46 @@ const MOODS = ['Energik', 'Sinematik', 'Santai', 'Lucu', 'Mewah', 'Dramatis', 'H
  * Cara cepat: Claude (claude.ai) yang menggabungkan video referensi jadi satu video contoh.
  * Langkah 1 di sini: isi brief → salin prompt pembuka. Referensi Utama kosong dibuat untuk menampung hasilnya.
  */
-export function MergeStartSheet({ open, onClose, master }: { open: boolean; onClose: () => void; master?: Master }) {
-  const [b, setB] = useState<MergeBrief>({ title: master?.title ?? '', brief: master?.summary ?? '', refCount: 7, duration: 20, aspect: master?.aspect ?? '9:16', mood: [], sound: 'ref' })
+export function MergeStartSheet({
+  open,
+  onClose,
+  master,
+  idea,
+  refCount,
+  onDone,
+}: {
+  open: boolean
+  onClose: () => void
+  master?: Master
+  /** Dari halaman Proyek: Referensi Utama dibuat/ditautkan ke proyek ini */
+  idea?: Idea
+  refCount?: number
+  onDone?: () => void
+}) {
+  const [b, setB] = useState<MergeBrief>({
+    title: master?.title ?? idea?.title ?? '',
+    brief: master?.summary || [idea?.concept, idea?.client && `Klien: ${idea.client}`].filter(Boolean).join('. '),
+    refCount: refCount || 7,
+    duration: idea?.durationTarget ?? 20,
+    aspect: master?.aspect ?? '9:16',
+    mood: [],
+    sound: 'ref',
+  })
   const set = (c: Partial<MergeBrief>) => setB((x) => ({ ...x, ...c }))
 
   const go = async () => {
-    const ok = await copyText(mergeStartPrompt(b))
+    // salin dimulai dulu (selagi halaman masih fokus), lalu Claude dibuka di gestur yang sama supaya tidak diblokir
+    const copying = copyText(mergeStartPrompt(b))
+    window.open('https://claude.ai/new', '_blank', 'noopener')
+    const ok = await copying
+    if (idea) {
+      const m = await ensureMaster(idea)
+      await patch(db.masters, m.id, { summary: b.brief || m.summary, aspect: b.aspect as Master['aspect'] })
+      toast(ok ? 'Prompt disalin. Tempel di Claude + lampirkan videonya.' : 'Gagal menyalin, coba lagi')
+      onClose()
+      onDone?.()
+      return
+    }
     let id = master?.id
     if (!id) {
       const m = newMaster(b.title.trim() || 'Video gabungan Claude', { summary: b.brief, aspect: b.aspect as Master['aspect'] })
@@ -44,7 +79,7 @@ export function MergeStartSheet({ open, onClose, master }: { open: boolean; onCl
       title="Gabungkan referensi di Claude"
       footer={
         <Button variant="primary" size="lg" block icon={<Copy size={20} />} onClick={go}>
-          Salin prompt & lanjut
+          Salin & buka Claude
         </Button>
       }
     >

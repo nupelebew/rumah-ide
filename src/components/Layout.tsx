@@ -1,26 +1,27 @@
 import { type ReactNode } from 'react'
-import { Clapperboard, LayoutGrid, NotebookPen, Plus, Search, Settings, Sun, CalendarHeart, History } from 'lucide-react'
-import { useLiveQuery } from 'dexie-react-hooks'
+import { Clapperboard, Film, House, Plus, Search, Settings, CalendarHeart } from 'lucide-react'
 import { navigate } from '../lib/router'
 import { cx, IconButton } from './ui'
-import { db } from '../db/db'
-import { toDateKey } from '../lib/dates'
 
+// Navigasi per tujuan: hari ini, video yang dikerjakan, bahan referensi, urusan harian.
 const TABS = [
-  { key: 'tangkap', label: 'Tangkap', icon: NotebookPen },
-  { key: 'ref', label: 'Referensi', icon: Clapperboard },
+  { key: 'hari-ini', label: 'Hari Ini', icon: House },
+  { key: 'konten', label: 'Proyek', icon: Film },
   null,
-  { key: 'konten', label: 'Konten', icon: LayoutGrid },
+  { key: 'ref', label: 'Referensi', icon: Clapperboard },
   { key: 'harian', label: 'Harian', icon: CalendarHeart },
 ] as const
 
 const SECTION_OF: Record<string, string> = {
-  tangkap: 'tangkap',
-  rapikan: 'tangkap',
+  'hari-ini': 'hari-ini',
+  tangkap: 'hari-ini',
+  rapikan: 'hari-ini',
+  review: 'hari-ini',
   ref: 'ref',
   racik: 'ref',
-  utama: 'ref',
+  utama: 'konten',
   konten: 'konten',
+  papan: 'konten',
   syuting: 'konten',
   acak: 'konten',
   harian: 'harian',
@@ -28,37 +29,16 @@ const SECTION_OF: Record<string, string> = {
 }
 
 export function TopBar({ route }: { route: string }) {
-  const pick = useLiveQuery(() => db.today.get(toDateKey()), [])
-  const n = pick?.items.length ?? 0
-  const onToday = route === 'hari-ini'
   return (
     <div className="safe-t sticky top-0 z-30 border-b-[1.5px] border-line/70 bg-paper/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-xl items-center gap-1 px-2">
-        <button
-          type="button"
-          onClick={() => navigate('hari-ini')}
-          className={cx(
-            'flex min-h-11 items-center gap-2 rounded-xl px-2.5 font-display text-base font-bold transition',
-            onToday ? 'text-ink' : 'text-ink-2 active:bg-paper-2',
-          )}
-          aria-label="Hari Ini"
-        >
-          <span className="relative flex size-7 items-center justify-center rounded-lg bg-ink text-paper">
-            <Sun size={16} strokeWidth={2.5} />
-            {n > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex size-4.5 items-center justify-center rounded-full bg-accent font-mono text-[10px] font-bold text-accent-ink">
-                {n}
-              </span>
-            )}
-          </span>
-          Hari Ini
+        <button type="button" onClick={() => navigate('hari-ini')} className="flex min-h-11 items-center gap-2 rounded-xl px-2.5 font-display text-base font-bold" aria-label="Rumah Ide, ke Hari Ini">
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="size-7 rounded-lg" />
+          Rumah Ide
         </button>
         <div className="flex-1" />
         <IconButton label="Cari" onClick={() => navigate('cari')} active={route === 'cari'}>
           <Search size={21} />
-        </IconButton>
-        <IconButton label="Review Mingguan" onClick={() => navigate('review')} active={route === 'review'}>
-          <History size={21} />
         </IconButton>
         <IconButton label="Pengaturan" onClick={() => navigate('atur')} active={route === 'atur'}>
           <Settings size={21} />

@@ -5,7 +5,7 @@ import { Button, CheckRow, cx } from '../../components/ui'
 import { toast } from '../../components/Toast'
 import { copyText } from '../../lib/file'
 import { navigate } from '../../lib/router'
-import { parseResponse, type ParseResult } from '../../ai/actions'
+import { looksLikeBridgeResponse, parseResponse, type ParseResult } from '../../ai/actions'
 import { applyAction, describe, kindLabel, type Preview } from '../../ai/apply'
 import { buildPrompt, TASK_LABEL } from '../../ai/prompts'
 import { suggest, useAiConfig, AiError } from '../../ai'
@@ -53,12 +53,33 @@ export function BridgeSheet({ input, initialResponse, onClose }: { input: Bridge
     setPicked(pv.map((p, i) => (p.warning || p.action.type === 'note' ? -1 : i)).filter((i) => i >= 0))
     setStep('preview')
   }
-  const copy = async () => {
-    if (await copyText(prompt)) {
-      toast('Prompt disalin. Tempel di Claude.')
-      setStep('paste')
-    } else toast('Gagal menyalin. Tahan teks prompt lalu salin manual.')
+  /** Satu ketuk: salin prompt + buka Claude, lalu langsung siap menempel jawaban. */
+  const copyAndOpen = async () => {
+    const copying = copyText(prompt)
+    window.open('https://claude.ai/new', '_blank', 'noopener')
+    setStep('paste')
+    if (!(await copying)) toast('Gagal menyalin otomatis. Buka “Lihat prompt” lalu salin manual.')
   }
+
+  // Saat kembali dari Claude, coba baca jawaban dari clipboard (kalau browser mengizinkan)
+  useEffect(() => {
+    if (step !== 'paste') return
+    const onVisible = async () => {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const t = await navigator.clipboard.readText()
+        if (looksLikeBridgeResponse(t)) {
+          setResponse(t)
+          await parse(t)
+        }
+      } catch {
+        /* butuh ketukan pengguna; tombol Tempel tetap ada */
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
   const pasteClipboard = async () => {
     try {
       const t = await navigator.clipboard.readText()
@@ -130,26 +151,39 @@ export function BridgeSheet({ input, initialResponse, onClose }: { input: Bridge
 
       {step === 'prompt' && (
         <div className="space-y-3">
-          <p className="text-sm text-ink-2">Prompt ini berisi data yang kamu pilih. Salin, tempel di Claude (aplikasi atau claude.ai), lalu bawa jawabannya ke sini.</p>
-          <textarea readOnly value={prompt} rows={8} className="field font-mono text-xs leading-relaxed" onFocus={(e) => e.currentTarget.select()} />
           {attach && (
             <div className="flex gap-2 rounded-xl bg-warn-soft p-3 text-sm">
               <AlertTriangle size={18} className="mt-0.5 shrink-0 text-warn" />
               <span>{attach}</span>
             </div>
           )}
-          <Button variant="primary" size="lg" block icon={<Copy size={20} />} onClick={copy} disabled={!prompt}>
-            Salin prompt
-          </Button>
-          <a href="https://claude.ai/new" target="_blank" rel="noreferrer noopener" onClick={() => setStep('paste')} className="flex min-h-12 items-center justify-center gap-2 rounded-xl border-[1.5px] border-line bg-card text-sm font-semibold">
-            <ExternalLink size={18} /> Buka Claude
-          </a>
-          {ai?.apiKey && (
-            <Button block icon={<Send size={18} />} onClick={sendDirect} disabled={busy || !prompt}>
-              {busy ? 'Menunggu Claude…' : 'Kirim langsung (pakai API key)'}
-            </Button>
+          {ai?.apiKey ? (
+            <>
+              <Button variant="primary" size="lg" block icon={<Send size={20} />} onClick={sendDirect} disabled={busy || !prompt}>
+                {busy ? 'Menunggu Claude…' : 'Kirim ke Claude'}
+              </Button>
+              <Button block icon={<ExternalLink size={18} />} onClick={copyAndOpen} disabled={!prompt}>
+                Salin & buka claude.ai
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="primary" size="lg" block icon={<ExternalLink size={20} />} onClick={copyAndOpen} disabled={!prompt}>
+                Salin & buka Claude
+              </Button>
+              <p className="text-center text-xs text-ink-3">Di Claude: tempel → kirim → salin jawabannya → kembali ke sini.</p>
+            </>
           )}
           {error && <p className="rounded-xl bg-accent-soft p-3 text-sm">{error}</p>}
+          <details className="rounded-xl bg-paper-2">
+            <summary className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-semibold text-ink-2">Lihat prompt</summary>
+            <div className="space-y-2 px-3 pb-3">
+              <textarea readOnly value={prompt} rows={8} className="field font-mono text-xs leading-relaxed" onFocus={(e) => e.currentTarget.select()} />
+              <Button size="sm" icon={<Copy size={15} />} onClick={async () => (await copyText(prompt)) && toast('Prompt disalin')}>
+                Salin saja
+              </Button>
+            </div>
+          </details>
           <button type="button" onClick={() => setStep('paste')} className="min-h-11 w-full text-sm font-semibold text-ink-2 underline">
             Sudah punya jawaban → tempel
           </button>
@@ -158,10 +192,10 @@ export function BridgeSheet({ input, initialResponse, onClose }: { input: Bridge
 
       {step === 'paste' && (
         <div className="space-y-3">
-          <p className="text-sm text-ink-2">Salin seluruh jawaban Claude (termasuk blok kodenya), lalu tempel di sini.</p>
           <Button variant="primary" size="lg" block icon={<ClipboardPaste size={20} />} onClick={pasteClipboard}>
-            Tempel dari clipboard
+            Tempel jawaban Claude
           </Button>
+          <p className="text-center text-xs text-ink-3">Salin seluruh jawaban Claude dulu (termasuk kotak kodenya).</p>
           <textarea value={response} onChange={(e) => setResponse(e.target.value)} rows={7} placeholder="…atau tempel manual di sini" className="field font-mono text-xs" />
           <Button block onClick={() => parse(response)} disabled={!response.trim()}>
             Baca jawaban

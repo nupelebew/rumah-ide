@@ -63,8 +63,12 @@ export async function dealToMaster(mix: Mix): Promise<ID> {
     master = (await db.masters.get(mix.masterId))!
     await patch(db.masters, master.id, { segments })
   } else {
-    master = newMaster(mix.title, { mixId: mix.id, summary: mix.brief, segments })
+    master = newMaster(mix.title, { mixId: mix.id, ideaId: mix.ideaId, summary: mix.brief, segments })
     await db.masters.add(master)
+  }
+  if (mix.ideaId) {
+    await patch(db.ideas, mix.ideaId, { masterId: master.id })
+    await link('idea', mix.ideaId, 'master', master.id)
   }
   await patch(db.mixes, mix.id, { status: 'deal', masterId: master.id })
   await link('mix', mix.id, 'master', master.id)

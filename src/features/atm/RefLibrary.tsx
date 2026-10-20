@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, ClipboardPaste, Search, Upload, X, Shuffle } from 'lucide-react'
+import { Check, ClipboardPaste, Search, Upload, X, Shuffle, Layers } from 'lucide-react'
 import { Page } from '../../components/Layout'
-import { Button, Chip, ChipRow, Empty, PageHeader, SampleBadge, Segmented, cx } from '../../components/ui'
+import { Button, Chip, ChipRow, Empty, IconButton, PageHeader, SampleBadge, Segmented, cx } from '../../components/ui'
 import { PlatformBadge, Thumb } from '../../components/Media'
 import { toast } from '../../components/Toast'
 import { db } from '../../db/db'
@@ -97,9 +97,15 @@ export default function RefLibrary() {
 
   return (
     <Page>
-      <PageHeader kicker="Mode 2 · ATM" title="Bedah Referensi">
-        <RefTabs value="ref" />
-      </PageHeader>
+      <PageHeader
+        kicker="Pustaka · bedah ATM"
+        title="Referensi"
+        actions={
+          <IconButton label="Papan Racik & Referensi Utama" onClick={() => navigate('racik')}>
+            <Layers size={21} />
+          </IconButton>
+        }
+      />
 
       <div className="space-y-2 px-4">
         <div className="flex gap-2">

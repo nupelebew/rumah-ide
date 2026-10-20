@@ -10,7 +10,7 @@ import { db } from '../../db/db'
 import { patch, removeLinksOf } from '../../db/repo'
 import { newShot } from '../../db/factories'
 import type { CheckItem, ShootSession, ShootShot } from '../../db/types'
-import { navigate } from '../../lib/router'
+import { navigate, queryParam } from '../../lib/router'
 import { relativeDay } from '../../lib/dates'
 import { downloadBlob } from '../../lib/file'
 import { now, uid } from '../../lib/id'
@@ -53,7 +53,7 @@ export default function ShootScreen({ id }: { id: string }) {
   }, [id])
   const [example, setExample] = useState<{ from: number; to?: number } | null>(null)
   const [tab, setTab] = useState<Tab>('shot')
-  const [field, setField] = useState(false)
+  const [field, setField] = useState(() => queryParam('lapangan') === '1')
   const [editShot, setEditShot] = useState<string | null>(null)
   const [editInfo, setEditInfo] = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)

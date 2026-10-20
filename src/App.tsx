@@ -12,7 +12,6 @@ import MixList from './features/mix/MixList'
 import MixBoard from './features/mix/MixBoard'
 import MasterScreen from './features/mix/MasterScreen'
 import ContentBoard from './features/content/ContentBoard'
-import ContentDetail from './features/content/ContentDetail'
 import RandomCombo from './features/content/RandomCombo'
 import ShootList from './features/shoot/ShootList'
 import ShootScreen from './features/shoot/ShootScreen'
@@ -22,6 +21,8 @@ import ReviewScreen from './features/review/ReviewScreen'
 import SearchScreen from './features/search/SearchScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import GuideScreen from './features/guide/GuideScreen'
+import ProjectScreen from './features/project/ProjectScreen'
+import ProjectList from './features/project/ProjectList'
 import { ensureDefaults, seedSamples } from './db/seed'
 import { applyThemeSetting } from './features/settings/theme'
 
@@ -39,7 +40,9 @@ function Screen({ route }: { route: string[] }) {
     case 'utama':
       return <MasterScreen id={b} key={b} />
     case 'konten':
-      return b ? <ContentDetail id={b} key={b} /> : <ContentBoard />
+      return b ? <ProjectScreen id={b} key={b} /> : <ProjectList />
+    case 'papan':
+      return <ContentBoard />
     case 'acak':
       return <RandomCombo />
     case 'syuting':

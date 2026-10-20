@@ -2,9 +2,9 @@ import type { ContentGoal, ContentStage } from '../../db/types'
 import type { Platform } from '../../lib/platform'
 
 export const STAGES: { value: ContentStage; label: string }[] = [
-  { value: 'ide', label: 'Ide' },
-  { value: 'dikembangkan', label: 'Dikembangkan' },
-  { value: 'siap', label: 'Siap Syuting' },
+  { value: 'ide', label: 'Konsep' },
+  { value: 'dikembangkan', label: 'Referensi' },
+  { value: 'siap', label: 'Video contoh' },
   { value: 'syuting', label: 'Syuting' },
   { value: 'edit', label: 'Edit' },
   { value: 'selesai', label: 'Selesai' },

@@ -12,24 +12,22 @@ interface Topic {
 
 const FLOW: Topic[] = [
   {
-    title: '★ Referensi → syuting (pakai Claude)',
-    go: { label: 'Mulai', to: 'racik' },
+    title: '★ Satu proyek = satu video',
+    go: { label: 'Buka Proyek', to: 'konten' },
     body: (
       <ol className="list-decimal space-y-1 pl-5">
-        <li>Simpan video referensi ke galeri (IG: rekam layar).</li>
         <li>
-          Referensi → <b>Papan Racik & Utama</b> → <b>Cara cepat: gabungkan di Claude</b>. Isi brief, salin prompt.
-        </li>
-        <li>Di claude.ai: tempel prompt + lampirkan semua video. Claude membuat 1 video contoh dengan sound.</li>
-        <li>
-          Unduh videonya → simpan di <b>Video contoh</b>.
+          Tab <b>Proyek</b> → <b>Proyek baru</b>. Isi nama (dan klien kalau ada).
         </li>
         <li>
-          Ketuk <b>Ambil hasil dari Claude</b> → tempel di <b>chat yang sama</b> → tempel balik jawabannya. Segmen, checklist shoot, dan resep CapCut terisi sekaligus.
+          Ikuti 5 langkah di atas layar. Tiap langkah punya <b>satu tombol utama</b>, lalu <b>Lanjut</b>.
         </li>
         <li>
-          Di lokasi: buka checklist → <b>Mode Lapangan</b> → ikuti kartu “Berikutnya”, ketuk ▶ untuk lihat contoh shot itu.
+          <b>Konsep</b> → <b>Referensi</b> (unggah video, “Gabungkan di Claude”) → <b>Video contoh</b> (simpan video, “Ambil hasil dari Claude”) →{' '}
+          <b>Syuting</b> (Mode Lapangan) → <b>Edit</b> (resep CapCut).
         </li>
+        <li>Tombol Claude: ketuk “Salin & buka Claude”, tempel di Claude, salin jawabannya, kembali, ketuk “Tempel jawaban Claude”.</li>
+        <li>Fitur lanjutan (racik manual, Remotion, detail segmen) ada di “Opsi lain” / menu ⋯.</li>
       </ol>
     ),
   },
@@ -39,7 +37,7 @@ const FLOW: Topic[] = [
     body: (
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          Tombol <b>+</b> dari mana saja: teks → Inbox, link → Referensi, jawaban Claude → diterapkan.
+          Tombol <b>+</b> dari mana saja: teks → Inbox, link → Referensi, jawaban Claude → diterapkan. Inbox ada di Hari Ini.
         </li>
         <li>Satu baris = satu ide. Jangan menyaring saat menulis.</li>
         <li>

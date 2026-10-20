@@ -12,7 +12,6 @@ import { navigate } from '../../lib/router'
 import { relativeDay, toDateKey } from '../../lib/dates'
 import { downloadBlob, pickFiles } from '../../lib/file'
 import { parseIcs, type IcsEvent } from '../../lib/ics'
-import { ContentTabs } from '../content/ContentBoard'
 import { shootsToIcs } from './shootOps'
 
 const SHOOT_WORDS = /\b(take|syuting|shoot|rekam)\b/i
@@ -59,16 +58,15 @@ export default function ShootList() {
   return (
     <Page>
       <PageHeader
-        kicker="Mode 3"
-        title="Syuting"
+        kicker="Proyek"
+        title="Jadwal syuting"
+        backTo="konten"
         actions={
           <Button size="sm" variant="ink" icon={<Plus size={16} />} onClick={create}>
             Baru
           </Button>
         }
-      >
-        <ContentTabs value="syuting" />
-      </PageHeader>
+      />
 
       <div className="grid grid-cols-2 gap-2 px-4">
         <Button icon={<CalendarArrowDown size={18} />} onClick={importIcs}>

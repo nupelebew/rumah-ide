@@ -364,7 +364,7 @@ function SegmentSheet({ master, segId, onClose }: { master: Master; segId: strin
   )
 }
 
-function ShootCreateSheet({ open, master, onClose }: { open: boolean; master: Master; onClose: () => void }) {
+export function ShootCreateSheet({ open, master, onClose }: { open: boolean; master: Master; onClose: () => void }) {
   const templates = useLiveQuery(() => db.prepTemplates.toArray(), []) ?? []
   const [date, setDate] = useState(addDays(toDateKey(), 1))
   const [start, setStart] = useState('')
@@ -416,7 +416,7 @@ function ShootCreateSheet({ open, master, onClose }: { open: boolean; master: Ma
   )
 }
 
-function EditRecipe({ master }: { master: Master }) {
+export function EditRecipe({ master }: { master: Master }) {
   const steps = master.editRecipe
   const set = (editRecipe: EditStep[]) => patch(db.masters, master.id, { editRecipe })
   const done = steps.filter((s) => s.done).length
