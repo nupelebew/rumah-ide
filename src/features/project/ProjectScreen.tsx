@@ -25,6 +25,7 @@ import { addRefFromUrl, addRefsFromFiles } from '../atm/refOps'
 import { STEPS, ensureMaster, goToStep, openManualMix, projectRefs, projectShoot, stepOf } from './projectOps'
 import { PlannerCard } from '../sheet/PlannerCard'
 import { masterOf, useSheetConfig } from '../sheet/sync'
+import { uploadedStatus } from '../sheet/planner'
 
 export default function ProjectScreen({ id }: { id: string }) {
   const idea = useLiveQuery(() => db.ideas.get(id), [id])
@@ -534,7 +535,7 @@ function StepEdit({ idea, master }: { idea: Idea; master?: Master }) {
 /** Setelah proyek selesai: satu ketuk untuk menandai sudah diposting (status "Selesai di Upload"). */
 function UploadedBanner({ idea }: { idea: Idea }) {
   const cfg = useSheetConfig()
-  const uploaded = masterOf(cfg).status[4] ?? 'Selesai di Upload'
+  const uploaded = uploadedStatus(masterOf(cfg).status)
   const done = idea.planner?.status === uploaded
   return (
     <div className="mt-3 flex items-center gap-2 rounded-xl bg-ok-soft p-3 text-sm font-semibold">

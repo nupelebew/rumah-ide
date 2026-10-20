@@ -1,6 +1,6 @@
 import type { Idea } from '../../db/types'
 
-/** Daftar pilihan dari sheet Master. Bawaan = isi file Content_Planner_Multi_Akun.xlsx. */
+/** Daftar pilihan dari sheet Master. Bawaan = isi planner/Content_Planner_Rumah_Ide.xlsx. */
 export interface MasterLists {
   status: string[]
   pillar: string[]
@@ -10,14 +10,14 @@ export interface MasterLists {
 }
 
 export const DEFAULT_MASTER: MasterLists = {
-  status: ['Proses Writing', 'Proses Design', 'Proses Revisi', 'Siap Upload', 'Selesai di Upload', 'On Hold', 'Reschedule', 'Revisi Script / Caption'],
-  pillar: ['Engagement', 'Education', 'Social Proof', 'Brand Knowledge', 'Promotion', 'Story Telling', 'Personal Branding', 'Katalog', 'KOL Brief', 'Produk', 'Pengumuman'],
-  jenis: ['Instagram Single Feed', 'Instagram Carousel Feed', 'Instagram Story', 'Instagram Reels', 'TikTok Story', 'TikTok Ads', 'TikTok Video', 'YouTube Video'],
+  status: ['Konsep', 'Referensi', 'Video Contoh', 'Syuting', 'Editing', 'Siap Upload', 'Sudah Upload', 'On Hold', 'Reschedule', 'Revisi'],
+  pillar: ['Engagement', 'Education', 'Social Proof', 'Brand Knowledge', 'Promotion', 'Story Telling', 'Personal Branding', 'Katalog', 'KOL Brief', 'Produk', 'Pengumuman', 'Behind The Scene'],
+  jenis: ['Instagram Reels', 'Instagram Story', 'Instagram Carousel Feed', 'Instagram Single Feed', 'TikTok Video', 'TikTok Story', 'TikTok Ads', 'YouTube Video', 'YouTube Shorts'],
   pic: ['PIC 1', 'PIC 2', 'PIC 3', 'PIC 4', 'PIC 5'],
   akun: ['Akun 1', 'Akun 2', 'Akun 3', 'Akun 4', 'Akun 5'],
 }
 
-/** Satu baris sheet Planner (kolom A–J + ID di kolom K). */
+/** Satu baris sheet Planner. Skrip menaruh tiap nilai di kolom yang judulnya cocok. */
 export interface PlannerRow {
   id: string
   akun: string
@@ -30,15 +30,40 @@ export interface PlannerRow {
   copywriting: string
   deadlineScript: string
   catatan: string
+  klien: string
 }
 
+type StageKey = NonNullable<Idea['stage']> | 'uploaded'
+
 /**
- * Status otomatis dari langkah proyek, memakai URUTAN daftar status di Master
- * (jadi tetap benar walau namanya kamu ganti): 0 Writing, 1 Design, 2 Revisi, 3 Siap Upload.
+ * Nama status yang dicari per langkah. Nama pertama untuk planner baru, nama kedua untuk planner lama
+ * (Content_Planner_Multi_Akun.xlsx). Kalau tidak ada yang cocok, pakai urutan di Master.
  */
+const STATUS_NAMES: Record<StageKey, { names: string[]; index: number }> = {
+  ide: { names: ['Konsep', 'Proses Writing'], index: 0 },
+  dikembangkan: { names: ['Referensi', 'Proses Design'], index: 1 },
+  siap: { names: ['Video Contoh', 'Proses Design'], index: 2 },
+  syuting: { names: ['Syuting', 'Proses Design'], index: 3 },
+  edit: { names: ['Editing', 'Proses Revisi'], index: 4 },
+  selesai: { names: ['Siap Upload'], index: 5 },
+  uploaded: { names: ['Sudah Upload', 'Selesai di Upload'], index: 6 },
+}
+
+function statusFor(key: StageKey, status: string[]): string {
+  const { names, index } = STATUS_NAMES[key]
+  for (const n of names) {
+    const hit = status.find((s) => s.toLowerCase() === n.toLowerCase())
+    if (hit) return hit
+  }
+  return status[Math.min(index, status.length - 1)] ?? ''
+}
+
 export function autoStatus(stage: Idea['stage'], status: string[]): string {
-  const idx = stage === 'ide' || !stage ? 0 : stage === 'edit' ? 2 : stage === 'selesai' ? 3 : 1
-  return status[idx] ?? status[0] ?? ''
+  return statusFor(stage ?? 'ide', status)
+}
+
+export function uploadedStatus(status: string[]): string {
+  return statusFor('uploaded', status)
 }
 
 const GOAL_PILLAR: Record<string, string> = { jualan: 'Promotion', branding: 'Personal Branding', edukasi: 'Education', hiburan: 'Engagement' }
@@ -65,5 +90,6 @@ export function projectRow(idea: Idea, master: MasterLists = DEFAULT_MASTER): Pl
     copywriting: p.caption ?? '',
     deadlineScript: p.scriptDeadline ?? '',
     catatan: notes,
+    klien: idea.client ?? '',
   }
 }

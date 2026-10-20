@@ -45,7 +45,7 @@ const FLOW: Topic[] = [
         <li>
           Isi akun, tanggal upload, jenis, pillar, PIC, caption lewat kartu <b>Planner</b> di halaman proyek. Pilihannya diambil dari sheet Master.
         </li>
-        <li>Status otomatis: Konsep = Proses Writing, Referensi–Syuting = Proses Design, Edit = Proses Revisi, Selesai = Siap Upload, lalu “Sudah diupload”.</li>
+        <li>Status otomatis mengikuti langkah: Konsep → Referensi → Video Contoh → Syuting → Editing → Siap Upload → “Sudah diupload”.</li>
         <li>Offline? Perubahan diantrekan dan dikirim saat online lagi.</li>
       </ul>
     ),

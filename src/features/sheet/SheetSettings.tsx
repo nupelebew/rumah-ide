@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Copy, ExternalLink, RefreshCw, Sheet as SheetIcon, Unplug } from 'lucide-react'
+import { Copy, Download, ExternalLink, RefreshCw, Sheet as SheetIcon, Unplug } from 'lucide-react'
 import { Button, CheckRow, Label, Section } from '../../components/ui'
 import { toast } from '../../components/Toast'
 import { setSetting } from '../../db/repo'
@@ -79,7 +79,14 @@ export function SheetSettings() {
             <p className="text-sm text-ink-2">Setiap proyek otomatis jadi satu baris di sheet “Planner”: akun, status, tanggal upload, pillar, jenis, judul, caption, deadline, catatan. Pasang sekali, sekitar 3 menit.</p>
             <ol className="space-y-3 text-sm">
               <li>
-                <b>1.</b> Unggah file planner ke Google Drive, buka, lalu <b>File → Simpan sebagai Google Spreadsheet</b>.
+                <b>1.</b> Unduh template planner, unggah ke Google Drive, buka, lalu <b>File → Simpan sebagai Google Spreadsheet</b>. Ganti nama Akun & PIC di tab <i>Master</i>.
+                <a
+                  href={`${import.meta.env.BASE_URL}planner/Content_Planner_Rumah_Ide.xlsx`}
+                  download
+                  className="mt-2 flex min-h-11 w-fit items-center gap-1.5 rounded-xl border-[1.5px] border-line bg-card px-3 text-xs font-semibold"
+                >
+                  <Download size={15} /> Unduh template planner (.xlsx)
+                </a>
               </li>
               <li>
                 <b>2.</b> Di spreadsheet itu: <b>Ekstensi → Apps Script</b>. Hapus isinya, tempel skrip ini, lalu Simpan.
