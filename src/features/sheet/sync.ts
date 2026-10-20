@@ -174,3 +174,15 @@ export function startSheetSync() {
   window.addEventListener('online', () => void flush())
   void flush()
 }
+
+/** Minta skrip membuat (atau menemukan) folder hasil proyek di Google Drive milik pengguna. */
+export async function createDriveFolder(idea: Idea): Promise<string> {
+  const cfg = await getSheetConfig()
+  if (!cfg.url) throw new Error('Spreadsheet belum tersambung')
+  const r = (await call(cfg.url, { action: 'folder', rows: [{ id: idea.id, title: idea.title }] })) as { ok: boolean; error?: string; url?: string }
+  if (!r.ok || !r.url) {
+    const msg = r.error || 'Gagal membuat folder'
+    throw new Error(/DriveApp|izin|permission|authoriz/i.test(msg) ? 'Skrip belum diberi izin Drive. Jalankan fungsi izinkanDrive di Apps Script, lalu perbarui deployment.' : msg)
+  }
+  return r.url
+}

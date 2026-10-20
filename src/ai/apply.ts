@@ -26,6 +26,7 @@ const KIND: Record<Action['type'], string> = {
   shoot_checklist: 'Checklist shoot',
   edit_recipe: 'Resep edit',
   review_summary: 'Ringkasan minggu',
+  caption: 'Caption / copywriting',
   note: 'Catatan Claude',
 }
 
@@ -70,6 +71,10 @@ export async function describe(a: Action): Promise<Preview> {
     }
     case 'review_summary':
       return { action: a, title: 'Ringkasan minggu', detail: a.text.slice(0, 140) }
+    case 'caption': {
+      const i = await db.ideas.get(a.ideaId)
+      return { action: a, title: i?.title ?? 'Proyek', detail: a.text.slice(0, 160), warning: i ? undefined : 'Proyek tidak ditemukan' }
+    }
     case 'note':
       return { action: a, title: 'Catatan', detail: a.text }
   }
@@ -278,6 +283,12 @@ export async function applyAction(a: Action): Promise<string | undefined> {
       const r = await db.reviews.get(a.week)
       await db.reviews.put({ week: a.week, answers: { ...(r?.answers ?? {}), ringkasan: a.text }, createdAt: r?.createdAt ?? t })
       return 'review'
+    }
+    case 'caption': {
+      const i = await db.ideas.get(a.ideaId)
+      if (!i) return
+      await patch(db.ideas, i.id, { planner: { ...i.planner, caption: a.text } })
+      return `konten/${i.id}`
     }
     case 'note':
       return

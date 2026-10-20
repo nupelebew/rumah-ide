@@ -57,6 +57,7 @@ export type Action =
   | { type: 'shoot_checklist'; shootId?: string; masterId?: string; title?: string; date?: string; start?: string; end?: string; location?: string; shots: ShotIn[]; prep: string[] }
   | { type: 'edit_recipe'; masterId: string; steps: { segment: string; steps: string[] }[] }
   | { type: 'review_summary'; week: string; text: string }
+  | { type: 'caption'; ideaId: string; text: string }
   | { type: 'note'; text: string }
 
 export type ActionType = Action['type']
@@ -231,6 +232,12 @@ export function normalizeAction(raw: unknown): Action | string {
       const week = date(o.week)
       if (!text || !week) return 'review_summary butuh week dan text'
       return { type, week, text }
+    }
+    case 'caption': {
+      const ideaId = str(o.ideaId)
+      const text = str(o.text, 2200)
+      if (!ideaId || !text) return 'caption butuh ideaId dan text'
+      return { type, ideaId, text }
     }
     case 'note': {
       const text = str(o.text, 4000)

@@ -46,6 +46,10 @@ const FLOW: Topic[] = [
           Isi akun, tanggal upload, jenis, pillar, PIC, caption lewat kartu <b>Planner</b> di halaman proyek. Pilihannya diambil dari sheet Master.
         </li>
         <li>Status otomatis mengikuti langkah: Konsep → Referensi → Video Contoh → Syuting → Editing → Siap Upload → “Sudah diupload”.</li>
+        <li>
+          Hasil video: langkah 5 → kartu <b>Hasil</b> (catatan, link Google Drive, link postingan). “Buat folder Drive otomatis” membuat folder per proyek.
+        </li>
+        <li>Caption: kartu Planner → “Buatkan caption dengan Claude”.</li>
         <li>Offline? Perubahan diantrekan dan dikirim saat online lagi.</li>
       </ul>
     ),

@@ -31,6 +31,9 @@ export interface PlannerRow {
   deadlineScript: string
   catatan: string
   klien: string
+  hasil: string
+  linkDrive: string
+  linkPostingan: string
 }
 
 type StageKey = NonNullable<Idea['stage']> | 'uploaded'
@@ -91,5 +94,8 @@ export function projectRow(idea: Idea, master: MasterLists = DEFAULT_MASTER): Pl
     deadlineScript: p.scriptDeadline ?? '',
     catatan: notes,
     klien: idea.client ?? '',
+    hasil: p.result ?? '',
+    linkDrive: p.driveUrl ?? '',
+    linkPostingan: p.postUrl ?? '',
   }
 }

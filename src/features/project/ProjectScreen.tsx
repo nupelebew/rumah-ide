@@ -24,6 +24,7 @@ import { BridgeButton } from '../bridge/BridgeButton'
 import { addRefFromUrl, addRefsFromFiles } from '../atm/refOps'
 import { STEPS, ensureMaster, goToStep, openManualMix, projectRefs, projectShoot, stepOf } from './projectOps'
 import { PlannerCard } from '../sheet/PlannerCard'
+import { HasilCard } from '../sheet/HasilCard'
 import { masterOf, useSheetConfig } from '../sheet/sync'
 import { uploadedStatus } from '../sheet/planner'
 
@@ -507,6 +508,9 @@ function StepEdit({ idea, master }: { idea: Idea; master?: Master }) {
     return (
       <Section>
         <StepTitle n={5} title="Edit" hint="Resep edit CapCut muncul di sini setelah langkah 3." />
+        <div className="mb-3">
+          <HasilCard idea={idea} />
+        </div>
         <Button onClick={() => goToStep(idea, 2)}>Ke langkah 3</Button>
       </Section>
     )
@@ -514,6 +518,9 @@ function StepEdit({ idea, master }: { idea: Idea; master?: Master }) {
     <>
       <Section>
         <StepTitle n={5} title="Edit" hint="Ikuti langkah per segmen di CapCut, centang sambil jalan." />
+        <div className="mb-4">
+          <HasilCard idea={idea} />
+        </div>
         {master.videoId && (
           <details className="group">
             <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold">

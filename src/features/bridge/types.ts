@@ -15,6 +15,7 @@ export type BridgeTask =
   | 'edit'
   | 'review'
   | 'harvest'
+  | 'caption'
 
 export interface BridgeInput {
   task: BridgeTask

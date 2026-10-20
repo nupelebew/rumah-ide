@@ -71,6 +71,12 @@ export interface PlannerFields {
   caption?: string
   /** Status manual (On Hold, Reschedule, Selesai di Upload, …). Kosong = otomatis dari langkah. */
   status?: string
+  /** Catatan hasil akhir, mis. "Final v2 · 30 dtk · 9:16" */
+  result?: string
+  /** Folder/file hasil di Google Drive */
+  driveUrl?: string
+  /** Link postingan setelah diupload */
+  postUrl?: string
 }
 
 /* ---------- Referensi & ATM ---------- */

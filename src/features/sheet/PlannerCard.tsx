@@ -9,6 +9,7 @@ import { formatDate } from '../../lib/dates'
 import { navigate } from '../../lib/router'
 import { autoStatus, projectRow } from './planner'
 import { masterOf, useSheetConfig, useSyncState } from './sync'
+import { BridgeButton } from '../bridge/BridgeButton'
 
 const opts = (l: string[]) => l.map((v) => ({ value: v, label: v }))
 
@@ -70,6 +71,9 @@ export function PlannerCard({ idea }: { idea: Idea }) {
           <div>
             <Label>Isi copywriting / caption</Label>
             <AutoField value={p.caption ?? ''} onSave={(caption) => set({ caption })} multiline rows={4} placeholder="Caption yang akan diposting" />
+            <div className="mt-2">
+              <BridgeButton input={{ task: 'caption', ideaIds: [idea.id] }} label={p.caption ? 'Perbaiki caption dengan Claude' : 'Buatkan caption dengan Claude'} variant="ghost" />
+            </div>
           </div>
           <div>
             <Label hint="Kosongkan pilihan = mengikuti langkah proyek">Status postingan</Label>

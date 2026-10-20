@@ -8,6 +8,9 @@
  *    Jalankan sebagai: Saya. Yang memiliki akses: Siapa saja. → Terapkan → izinkan akses.
  * 4. Salin "URL aplikasi web" lalu tempel di Rumah Ide → Pengaturan → Spreadsheet.
  *
+ * Fitur "Buat folder Drive": pilih fungsi izinkanDrive di atas → klik Jalankan → izinkan akses Drive (sekali).
+ * Setelah mengganti kode: Terapkan → Kelola deployment → ✏ → Versi: Versi baru → Terapkan (URL tetap sama).
+ *
  * Kolom dicari berdasarkan JUDUL di baris 4, jadi urutan kolom boleh berbeda.
  * URL aplikasi web berfungsi seperti kunci: siapa pun yang memegangnya bisa menambah baris. Jangan dibagikan.
  */
@@ -30,8 +33,14 @@ var HEADERS = {
   deadlineScript: 'Deadline Script',
   catatan: 'Catatan Script',
   klien: 'Klien',
+  hasil: 'Hasil',
+  linkDrive: 'Link Google Drive',
+  linkPostingan: 'Link Postingan',
   id: 'ID Rumah Ide',
 }
+// kolom yang dibuat otomatis (sebelum kolom ID) kalau belum ada di sheet
+var AUTO_ADD = ['klien', 'hasil', 'linkDrive', 'linkPostingan']
+var DRIVE_PARENT = 'Rumah Ide - Hasil'
 var DATE_FIELDS = { tglUpload: true, deadlineScript: true }
 
 function doGet() {
@@ -45,6 +54,7 @@ function doPost(e) {
   try {
     var sh = SpreadsheetApp.getActive().getSheetByName(PLANNER)
     if (!sh) return json_({ ok: false, error: 'Sheet "' + PLANNER + '" tidak ditemukan' })
+    if (body.action === 'folder') return json_(folder_((body.rows || [])[0] || {}))
     var cols = columns_(sh)
     var rows = body.rows || []
     var results = rows.map(function (r) {
@@ -58,7 +68,7 @@ function doPost(e) {
   }
 }
 
-/** Peta field → nomor kolom (dari judul di baris 4). Kolom ID dibuat kalau belum ada. */
+/** Peta field → nomor kolom (dari judul di baris 4). Kolom ID & kolom baru dibuat kalau belum ada. */
 function columns_(sh) {
   var width = Math.max(sh.getLastColumn(), 1)
   var heads = sh.getRange(HEADER_ROW, 1, 1, width).getValues()[0].map(function (h) {
@@ -75,8 +85,31 @@ function columns_(sh) {
     cols.id = last + 1
     sh.getRange(HEADER_ROW, cols.id).setValue(HEADERS.id).setFontColor('#999999')
   }
+  AUTO_ADD.forEach(function (f) {
+    if (cols[f]) return
+    sh.insertColumnBefore(cols.id) // kolom baru masuk sebelum ID, jadi ID tetap paling kanan
+    sh.getRange(HEADER_ROW, cols.id).setValue(HEADERS[f]).setFontWeight('bold').setFontColor('#ffffff').setBackground('#1d1b18')
+    cols[f] = cols.id
+    cols.id += 1
+  })
   cols.width = Math.max.apply(null, Object.keys(cols).map(function (k) { return cols[k] }))
   return cols
+}
+
+/** Buat (atau temukan) folder hasil untuk satu proyek di Google Drive. */
+function folder_(r) {
+  if (!r.id) return { ok: false, error: 'tanpa id' }
+  var it = DriveApp.getFoldersByName(DRIVE_PARENT)
+  var parent = it.hasNext() ? it.next() : DriveApp.createFolder(DRIVE_PARENT)
+  var name = (r.title || 'Proyek') + ' - ' + String(r.id).slice(0, 6)
+  var sub = parent.getFoldersByName(name)
+  var f = sub.hasNext() ? sub.next() : parent.createFolder(name)
+  return { ok: true, url: f.getUrl() }
+}
+
+/** Jalankan sekali dari editor untuk memberi izin akses Google Drive. */
+function izinkanDrive() {
+  DriveApp.getRootFolder()
 }
 
 function upsert_(sh, cols, r) {

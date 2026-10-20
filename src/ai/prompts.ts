@@ -19,6 +19,7 @@ export const TASK_LABEL: Record<BridgeTask, string> = {
   edit: 'Resep edit CapCut',
   review: 'Rangkum minggu ini',
   harvest: 'Ambil hasil dari Claude',
+  caption: 'Buatkan caption',
 }
 
 /** Contoh bentuk tiap aksi — hanya yang relevan untuk tugas itu yang dimasukkan ke prompt. */
@@ -36,6 +37,7 @@ const SHAPES: Record<ActionType, string> = {
   edit_recipe: `{"type":"edit_recipe","masterId":"<id>","steps":[{"segment":"…","steps":["langkah 1","langkah 2"]}]}`,
   review_summary: `{"type":"review_summary","week":"YYYY-MM-DD","text":"…"}`,
   note: `{"type":"note","text":"…"}`,
+  caption: `{"type":"caption","ideaId":"<id>","text":"caption lengkap siap posting"}`,
 }
 
 const ALLOWED: Record<BridgeTask, ActionType[]> = {
@@ -52,6 +54,7 @@ const ALLOWED: Record<BridgeTask, ActionType[]> = {
   edit: ['edit_recipe', 'note'],
   review: ['review_summary', 'note'],
   harvest: ['master', 'shoot_checklist', 'edit_recipe', 'note'],
+  caption: ['caption', 'note'],
 }
 
 const clean = (o: unknown) => JSON.stringify(o, (_, v) => (v === '' || v === undefined || (Array.isArray(v) && !v.length) ? undefined : v))
@@ -164,6 +167,16 @@ async function build(input: BridgeInput): Promise<Built> {
 3. "edit_recipe" dengan masterId "${input.masterId}": langkah edit di CapCut (HP) per segmen supaya hasilnya mirip video gabungan: potong ikut beat, speed ramp, transisi, teks, sound, grading.
 Kalau ada yang kamu ragukan (mis. detik sumber), tandai "(?)" di description.`,
         data: { referensiUtama: master && { id: master.id, judul: master.title, ringkasan: master.summary, rasio: master.aspect }, rencanaSyuting: plan, alat: await gear() },
+      }
+    }
+    case 'caption': {
+      const i = ideas[0]!
+      return {
+        task: `Tulis SATU caption/copywriting yang siap diposting untuk video ini: kalimat pembuka yang memancing (selaras dengan hook), isi singkat 2–4 kalimat, ajakan (CTA) yang jelas, lalu 5–10 hashtag relevan. Sesuaikan gaya dengan platform & pillar. Bahasa Indonesia natural, tidak lebay, emoji secukupnya. Kalau ada caption lama, perbaiki saja. Satu aksi "caption" dengan ideaId "${i.id}". Boleh beri 1 alternatif singkat di "note".`,
+        data: {
+          proyek: { id: i.id, judul: i.title, klien: i.client, tujuan: i.goal, platform: i.platforms, hook: i.hook, konsep: i.concept, durasi: i.durationTarget, adegan: i.storyboard?.map((s) => s.title + ': ' + s.visual) },
+          planner: { akun: i.planner?.akun, jenis: i.planner?.jenis, pillar: i.planner?.pillar, captionSekarang: i.planner?.caption },
+        },
       }
     }
     case 'review': {

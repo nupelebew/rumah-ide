@@ -55,6 +55,9 @@ Catatan:
 - Kolom dicari berdasarkan **judul** di baris 4 (Akun, Status Postingan, …, Klien, ID Rumah Ide). Kolom **ID Rumah Ide** membuat baris yang sama diperbarui, tidak dobel. Planner lama (`Content_Planner_Multi_Akun.xlsx`) juga tetap bisa dipakai.
 - Pilihan Akun/PIC/Pillar/Jenis/Status dibaca dari sheet **Master**.
 - Status otomatis mengikuti langkah proyek: Konsep → Referensi → Video Contoh → Syuting → Editing → Siap Upload, lalu tombol *Sudah diupload* = Sudah Upload. On Hold, Reschedule, dan Revisi bisa dipilih manual.
+- **Hasil**: di langkah Edit ada kartu *Hasil* berisi catatan hasil, Link Google Drive, dan Link Postingan, yang masuk ke kolom *Hasil / Link Google Drive / Link Postingan* (kolom dibuat otomatis kalau belum ada). Tombol *Buat folder Drive otomatis* membuat folder `Rumah Ide - Hasil/<judul proyek>` di Drive pemilik skrip. Fitur ini perlu izin Drive: di Apps Script, pilih fungsi `izinkanDrive`, lalu klik *Jalankan* dan *Izinkan*.
+- **Caption**: di kartu Planner ada tombol *Buatkan caption dengan Claude*.
+- Setelah mengganti kode skrip: **Terapkan → Kelola deployment → ✏ → Versi: Versi baru → Terapkan**. URL-nya tetap sama.
 - Sinkronnya satu arah (aplikasi → sheet). Mengubah sheet langsung tidak mengubah aplikasi, dan bisa tertimpa saat proyek diubah lagi di aplikasi.
 - URL Apps Script berfungsi seperti kunci. URL ini tidak ikut di file ekspor; jangan dibagikan.
 - Template menyiapkan 500 baris (5–504). Sheet Ringkasan juga menghitung jadwal upload minggu ini, bulan ini, dan yang terlambat.

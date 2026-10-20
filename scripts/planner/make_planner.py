@@ -45,8 +45,13 @@ COLS = [
     ('Deadline Script', 15),
     ('Catatan Script', 40),
     ('Klien', 18),
+    ('Hasil', 26),
+    ('Link Google Drive', 30),
+    ('Link Postingan', 30),
     ('ID Rumah Ide', 12),
 ]
+ID_COL = len(COLS)
+LAST_LETTER = get_column_letter(ID_COL)
 
 thin = Side(style='thin', color=LINE)
 border = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -76,7 +81,7 @@ notes = [
     'Teks biru (PIC dan Akun) ganti dengan nama sebenarnya, mis. @namaakun.',
     'Status mengikuti 5 langkah proyek di aplikasi Rumah Ide. Urutan jangan diubah.',
     'Pillar & Jenis boleh ditambah di bawah daftarnya (sampai baris 30).',
-    'Kolom L (ID Rumah Ide) diisi otomatis oleh aplikasi. Jangan diubah.',
+    'Kolom ID Rumah Ide (paling kanan) diisi otomatis oleh aplikasi. Jangan diubah.',
 ]
 for i, n in enumerate(notes, 2):
     ms.cell(row=i, column=7, value=n).font = note_font
@@ -92,10 +97,10 @@ pl = wb.create_sheet('Planner', 0)
 pl['A1'] = 'CONTENT PLANNER · RUMAH IDE'
 pl['A1'].font = title_font
 pl['A2'] = ('Diisi otomatis dari aplikasi Rumah Ide (bisa juga manual). Kolom Akun, Status, PIC, Pillar, Jenis pakai dropdown dari sheet Master. '
-            'Baris 5 adalah contoh, boleh ditimpa. Kolom L dipakai aplikasi, jangan diubah.')
+            'Baris 5 adalah contoh, boleh ditimpa. Kolom ID Rumah Ide dipakai aplikasi, jangan diubah.')
 pl['A2'].font = note_font
 pl['A2'].alignment = Alignment(wrap_text=True, vertical='top')
-pl.merge_cells('A2:L2')
+pl.merge_cells(f'A2:{LAST_LETTER}2')
 pl.row_dimensions[2].height = 30
 
 for c, (name, width) in enumerate(COLS, 1):
@@ -103,12 +108,13 @@ for c, (name, width) in enumerate(COLS, 1):
     cell.font, cell.fill, cell.border = head_font, head_fill, border
     cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
     pl.column_dimensions[get_column_letter(c)].width = width
-pl['L4'].fill = PatternFill('solid', fgColor=MUTED)
+pl[f'{LAST_LETTER}4'].fill = PatternFill('solid', fgColor=MUTED)
 pl.row_dimensions[4].height = 28
 
 example = ['Akun 1', 'Konsep', 'PIC 1', date(2026, 10, 26), 'Education', 'Instagram Reels',
            'Contoh: 5 kesalahan pemula saat latihan tenis', 'Contoh: Ketahui 5 kesalahan ini supaya latihanmu tidak sia-sia…',
-           date(2026, 10, 23), 'Contoh: hook bola memantul slow-mo, CTA simpan postingan', 'Contoh: Klub Tenis 75', '']
+           date(2026, 10, 23), 'Contoh: hook bola memantul slow-mo, CTA simpan postingan', 'Contoh: Klub Tenis 75',
+           'Contoh: Final v2 · 30 dtk · 9:16', '', '', '']
 for r in range(FIRST, LAST + 1):
     for c in range(1, len(COLS) + 1):
         cell = pl.cell(row=r, column=c)
@@ -117,10 +123,12 @@ for r in range(FIRST, LAST + 1):
         cell.alignment = Alignment(vertical='top', wrap_text=c in (7, 8, 10))
         if c in (4, 9):
             cell.number_format = 'DD MMM YYYY'
-    pl.cell(row=r, column=12).font = Font(name='Arial', size=8, color='B0A898')
+    pl.cell(row=r, column=ID_COL).font = Font(name='Arial', size=8, color='B0A898')
+    for c in (13, 14):
+        pl.cell(row=r, column=c).font = Font(name='Arial', size=10, color='1F4E9E', underline='single')
 for c, v in enumerate(example, 1):
     pl.cell(row=FIRST, column=c, value=v)
-    if c in (7, 8, 10, 11):
+    if c in (7, 8, 10, 11, 12):
         pl.cell(row=FIRST, column=c).font = Font(name='Arial', size=10, italic=True, color=MUTED)
 
 rng = lambda col: f'{col}{FIRST}:{col}{LAST}'
@@ -143,7 +151,7 @@ pl.conditional_formatting.add(rng('I'), FormulaRule(
     font=Font(bold=True, color=ACCENT)))
 
 pl.freeze_panes = 'A5'
-pl.auto_filter.ref = f'A4:L{LAST}'
+pl.auto_filter.ref = f'A4:{LAST_LETTER}{LAST}'
 pl.sheet_view.zoomScale = 100
 
 # ---------------- Ringkasan ----------------

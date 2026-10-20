@@ -29,6 +29,10 @@ describe('projectRow', () => {
     expect(r).toMatchObject({ id: 'p1', akun: 'Akun 2', status: 'Syuting', pillar: 'Education', jenis: 'TikTok Video', tglUpload: '2026-10-26', judul: 'Reel tenis', klien: 'Klub Tenis 75' })
     expect(r.catatan).toContain('Hook: Bola memantul')
   })
+  it('hasil & link ikut terkirim', () => {
+    const r = projectRow({ ...base, planner: { result: 'Final v2', driveUrl: 'https://drive.google.com/drive/folders/x', postUrl: 'https://instagram.com/reel/y' } })
+    expect(r).toMatchObject({ hasil: 'Final v2', linkDrive: 'https://drive.google.com/drive/folders/x', linkPostingan: 'https://instagram.com/reel/y' })
+  })
   it('status & pilihan manual menang atas tebakan', () => {
     const r = projectRow({ ...base, stage: 'ide', goal: 'jualan', planner: { status: 'On Hold', pillar: 'Katalog', jenis: 'Instagram Story' } })
     expect(r).toMatchObject({ status: 'On Hold', pillar: 'Katalog', jenis: 'Instagram Story' })
