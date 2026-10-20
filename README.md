@@ -119,7 +119,7 @@ Panduan singkat juga ada di dalam aplikasi (ikon **?** di Hari Ini).
 2. **Papan Racik**: pilih beberapa referensi, masukkan ke slot Hook / Isi / Klimaks / Penutup, tandai detik mulai & selesai, dan pilih yang diambil (gerakan, transisi, warna…).
 3. **Deal → Referensi Utama**: cetak biru per segmen (shot, sudut, lensa, fps, gerakan, transisi). Bisa dilengkapi Claude Opus.
 4. **Paket Remotion**: file `.zip` berisi video sumber, titik potong (`brief.json`), frame, dan `PROMPT.md`. Pindahkan ke laptop, ekstrak, buka foldernya di **Claude Code**, lalu minta *"Kerjakan PROMPT.md"*. Hasilnya `out/referensi-utama.mp4` yang bisa disimpan balik ke aplikasi.
-5. **Checklist Shoot**: dibuat dari Referensi Utama dan menyesuaikan *Peralatan Saya*. Di lokasi, pakai **Mode Lapangan** (kontras tinggi, layar tetap menyala) dan centang tiap shot.
+5. **Checklist Shoot**: dibuat dari Referensi Utama dan menyesuaikan *Peralatan Saya*. Tiap shot punya tombol **Cara ambil**: animasi hasil di layar (ukuran shot, sudut, gerakan kamera, termasuk beda push-in vs zoom), diagram posisi kamera dari samping & atas, langkah praktis, saran shutter dari fps (aturan 180°), dan potongan contoh dari referensi bila ada. Di lokasi, pakai **Mode Lapangan** (kontras tinggi, layar tetap menyala) dan centang tiap shot.
 6. **Resep Edit CapCut**: langkah edit per segmen, centang sambil mengedit.
 
 Jadwal syuting bisa ditukar dengan **Ritme** atau Google Calendar lewat file `.ics` (Konten → Syuting → *Impor .ics* / *Ekspor ke kalender*).

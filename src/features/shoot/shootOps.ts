@@ -8,8 +8,8 @@ import { buildIcs, type IcsEvent } from '../../lib/ics'
 export function derivedPrep(master: Master, gear: Gear[]): string[] {
   const text = master.segments.map((s) => `${s.fps} ${s.movement} ${s.shotType} ${s.lens}`).join(' ').toLowerCase()
   const out: string[] = []
-  if (/120|slow|ramp/.test(text)) out.push('Set kamera ke 120fps (atau tertinggi) untuk shot slow-mo, shutter ±1/250')
-  else if (/60/.test(text)) out.push('Set 60fps untuk shot yang mau diperlambat, shutter ±1/125')
+  if (/120|slow|ramp/.test(text)) out.push('Set 120fps (atau tertinggi) untuk shot slow-mo, shutter ±1/240 (pilih 1/250), bawa ND untuk siang')
+  else if (/60/.test(text)) out.push('Set 60fps untuk shot yang mau diperlambat, shutter ±1/120 (pilih 1/125)')
   if (/gimbal|orbit|follow|push|pull/.test(text)) {
     const g = gear.find((x) => x.type === 'stabilizer')
     out.push(g ? `Kalibrasi ${g.name} & isi baterainya` : 'Siapkan gimbal/stabilizer & kalibrasi')

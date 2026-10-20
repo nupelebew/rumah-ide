@@ -15,6 +15,7 @@ import { relativeDay } from '../../lib/dates'
 import { downloadBlob } from '../../lib/file'
 import { now, uid } from '../../lib/id'
 import { shootsToIcs } from './shootOps'
+import { ShotGuideSheet } from './ShotGuideSheet'
 import { BridgeButton } from '../bridge/BridgeButton'
 
 type Tab = 'shot' | 'prep'
@@ -52,6 +53,7 @@ export default function ShootScreen({ id }: { id: string }) {
     return sh?.masterId ? await db.masters.get(sh.masterId) : undefined
   }, [id])
   const [example, setExample] = useState<{ from: number; to?: number } | null>(null)
+  const [guide, setGuide] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('shot')
   const [field, setField] = useState(() => queryParam('lapangan') === '1')
   const [editShot, setEditShot] = useState<string | null>(null)
@@ -164,11 +166,9 @@ export default function ShootScreen({ id }: { id: string }) {
                   <Button size="lg" onClick={() => setShot(next.id, { takes: next.takes + 1 })} aria-label="Tambah take">
                     +Take <span className="font-mono">{next.takes}</span>
                   </Button>
-                  {exampleRange(next.segmentId) && (
-                    <Button size="lg" onClick={() => setExample(exampleRange(next.segmentId))} aria-label="Lihat contoh" className="w-14 px-0">
-                      <Play size={22} />
-                    </Button>
-                  )}
+                  <Button size="lg" onClick={() => setGuide(next.id)} aria-label="Cara ambil shot ini" className="w-14 px-0">
+                    <Play size={22} />
+                  </Button>
                 </div>
               </div>
             )}
@@ -181,7 +181,7 @@ export default function ShootScreen({ id }: { id: string }) {
                   field={field}
                   onChange={(c) => setShot(sh.id, c)}
                   onEdit={() => setEditShot(sh.id)}
-                  onExample={exampleRange(sh.segmentId) ? () => setExample(exampleRange(sh.segmentId)) : undefined}
+                  onGuide={() => setGuide(sh.id)}
                 />
               ))}
             </ol>
@@ -242,6 +242,26 @@ export default function ShootScreen({ id }: { id: string }) {
       </Page>
 
       {example && master?.videoId && <ExampleSheet videoId={master.videoId} range={example} onClose={() => setExample(null)} />}
+      {guide &&
+        (() => {
+          const sh = s.shots.find((x) => x.id === guide)
+          if (!sh) return null
+          const range = exampleRange(sh.segmentId)
+          return (
+            <ShotGuideSheet
+              shot={sh}
+              onClose={() => setGuide(null)}
+              onExample={
+                range
+                  ? () => {
+                      setGuide(null)
+                      setExample(range)
+                    }
+                  : undefined
+              }
+            />
+          )
+        })()}
       <ShotSheet s={s} shotId={editShot} onClose={() => setEditShot(null)} />
       <InfoSheet s={s} open={editInfo} onClose={() => setEditInfo(false)} />
       <Confirm
@@ -282,14 +302,14 @@ function ShotCard({
   field,
   onChange,
   onEdit,
-  onExample,
+  onGuide,
 }: {
   shot: ShootShot
   n: number
   field: boolean
   onChange: (c: Partial<ShootShot>) => void
   onEdit: () => void
-  onExample?: () => void
+  onGuide: () => void
 }) {
   const [zoom, setZoom] = useState(false)
   const meta = [shot.shotType, shot.angle, shot.lens, shot.fps && `${shot.fps} fps`, shot.movement, shot.durationSec && `${shot.durationSec} dtk`].filter(Boolean)
@@ -323,11 +343,9 @@ function ShotCard({
           <Star size={20} fill={shot.goodTake ? 'currentColor' : 'none'} />
         </IconButton>
         <div className="flex-1" />
-        {onExample && (
-          <IconButton label="Lihat contoh shot ini" onClick={onExample}>
-            <Play size={19} />
-          </IconButton>
-        )}
+        <button type="button" onClick={onGuide} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-paper-2 px-3 text-xs font-semibold">
+          <Play size={15} /> Cara ambil
+        </button>
         {!field && (
           <IconButton label="Ubah shot" onClick={onEdit}>
             <Pencil size={17} />
